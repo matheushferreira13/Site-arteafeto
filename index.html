@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arteafeto - Confeitaria Artesanal</title>
+  <link rel="icon" type="image/png" href="./src/img/Adesivo circular para doceria moderno ilustrado rosa e bege.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/css/style.css">
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-top">
+      <form class="search-bar" role="search" aria-label="Pesquisar itens no site">
+        <label class="sr-only" for="search-site">Pesquisar itens do site</label>
+        <input id="search-site" type="search" placeholder="Pesquisar bolos, eclairs, cestas..." name="q">
+        <button type="submit">Buscar</button>
+      </form>
+      <div class="header-actions">
+        <a class="btn btn-admin" href="#" aria-label="Abrir area administrativa">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 1 3 5v6c0 5 3.8 9.7 9 11 5.2-1.3 9-6 9-11V5z"/><path d="M9 12l2 2 4-4"/></svg>
+          <span class="label-full">Admin</span>
+          <span class="label-short">Adm</span>
+        </a>
+        <a class="btn btn-whatsapp" href="https://wa.me/5535999597652?text=Ol%C3%A1%2C+gostaria+de+fazer+um+pedido" target="_blank" rel="noopener noreferrer">
+          <span class="label-full">Pedir pelo WhatsApp</span>
+          <span class="label-short">WhatsApp</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="brand-row">
+      <div class="logo-square" aria-label="Logo Arteafeto">
+        <img class="logo-image" src="./src/img/Adesivo circular para doceria moderno ilustrado rosa e bege.png" alt="Logo Arteafeto Confeitaria Artesanal">
+      </div>
+    </div>
+
+  </header>
+
+  <nav class="menu">
+    <div class="menu-links">
+      <a href="#destaques">Destaques</a>
+      <a href="#categorias">Produtos</a>
+      <a href="#historia">Nossa Essência</a>
+    </div>
+    <button class="btn-cart menu-cart-btn" id="cartBtn" aria-label="Ver carrinho">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <span class="cart-badge hidden" id="cartBadge">0</span>
+    </button>
+  </nav>
+
+  <main>
+    <section class="hero" id="topo">
+      <div class="carousel" aria-roledescription="carousel" aria-label="Informacoes e dicas">
+        <div class="carousel-track">
+          <article class="slide is-active">
+            <img src="/src/img/carrossel - 1.png" data-desktop-src="/src/img/carrossel - 1.png" data-mobile-src="/src/img/carrossel - 1 16x10.png" alt="Bolos artesanais decorados" loading="eager">
+            <div class="slide-caption">
+              <p>Destaque da semana</p>
+            </div>
+          </article>
+          <article class="slide">
+            <img src="/src/img/carrossel - 2.png" data-desktop-src="/src/img/carrossel - 2.png" data-mobile-src="/src/img/carrossel - 2 16x10.png" alt="Doces finos para eventos" loading="lazy">
+            <div class="slide-caption">
+              <p>Pedidos exclusivos</p>
+            </div>
+          </article>
+          <article class="slide">
+            <img src="/src/img/carrossel - 3.png" data-desktop-src="/src/img/carrossel - 3.png" data-mobile-src="/src/img/carrossel - 3 16x10.png" alt="Sobremesas em camadas" loading="lazy">
+            <div class="slide-caption">
+              <p>Sabores da temporada</p>
+            </div>
+          </article>
+        </div>
+        <button class="carousel-btn prev" type="button" aria-label="Slide anterior">&#10094;</button>
+        <button class="carousel-btn next" type="button" aria-label="Proximo slide">&#10095;</button>
+        <div class="carousel-dots" aria-label="Selecionar slide">
+          <button class="dot is-active" type="button" aria-label="Slide 1"></button>
+          <button class="dot" type="button" aria-label="Slide 2"></button>
+          <button class="dot" type="button" aria-label="Slide 3"></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="destaques">
+      <div class="section-head">
+        <p class="kicker">Mais pedidos</p>
+        <h2>Destaques da casa</h2>
+      </div>
+      <div class="cards cards-products">
+        <article class="card card-product">
+          <img src="/src/img/ovodecolher.png" alt="Ovos de Colher" loading="lazy">
+          <h3>Ovos de Colher</h3>
+          <p>Seleção com Ferrero Rocher, Kinder Bueno, Ninho com Geleia de Morango e mais.</p>
+          <strong>A partir de R$ 69,90</strong>
+        </article>
+        <article class="card card-product">
+          <img src="/src/img/degustação.png" alt="Kit Degustação" loading="lazy">
+          <h3>Kit Degustação</h3>
+          <p>Nossos sucessos em uma só caixa. Deguste e escolha!</p>
+          <strong>A partir de R$ 50,00</strong>
+        </article>
+        <article class="card card-product">
+          <img src="/src/img/kit mini confeiteiro.png" alt="Kit Mini Confeiteiro" loading="lazy">
+          <h3>Kit Mini Confeiteiro</h3>
+          <p>Diversão garantida: crie seu próprio ovo de colher!</p>
+          <strong>R$ 60,00</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="categorias">
+      <div class="section-head">
+        <p class="kicker">Catálogo</p>
+        <h2>Produtos por categoria</h2>
+      </div>
+      <div class="shop-grid">
+
+        <article class="product-card">
+          <div class="product-img">
+            <img src="/src/img/ovodecolher.png" alt="Ovos de Colher" loading="lazy">
+          </div>
+          <div class="product-info">
+            <h3>Ovos de Colher</h3>
+            <p>Ferrero Rocher, Kinder Bueno, Ninho com Geleia de Morango e outros sabores sazonais.</p>
+            <div class="size-picker">
+              <p class="flavor-label">Escolha o tamanho:</p>
+              <div class="size-chips">
+                <button type="button" class="size-chip" data-size="P" data-price="69.90">
+                  <span class="size-chip-label">P</span>
+                  <span class="size-chip-detail">aprox. 250g &mdash; R$ 69,90</span>
+                </button>
+                <button type="button" class="size-chip" data-size="G" data-price="122.90">
+                  <span class="size-chip-label">G</span>
+                  <span class="size-chip-detail">aprox. 600g &mdash; R$ 122,90</span>
+                </button>
+              </div>
+            </div>
+            <div class="flavor-picker">
+              <p class="flavor-label">Escolha o sabor:</p>
+              <div class="flavor-chips">
+                <button type="button" class="flavor-chip" data-flavor="Ferrero Rocher">Ferrero Rocher</button>
+                <button type="button" class="flavor-chip" data-flavor="Kinder Bueno">Kinder Bueno</button>
+                <button type="button" class="flavor-chip" data-flavor="Ninho e Nutella">Ninho e Nutella</button>
+                <button type="button" class="flavor-chip" data-flavor="Ninho com Geleia de Morango">Ninho com Geleia de Morango</button>
+                <button type="button" class="flavor-chip" data-flavor="Maracujá com Chocolate">Maracujá com Chocolate</button>
+                <button type="button" class="flavor-chip" data-flavor="Dois Amores">Dois Amores</button>
+                <button type="button" class="flavor-chip" data-flavor="Brigadeiro">Brigadeiro</button>
+                <button type="button" class="flavor-chip" data-flavor="Cookies n' Cream">Cookies n' Cream</button>
+                <button type="button" class="flavor-chip" data-flavor="Pistache">Pistache</button>
+                <button type="button" class="flavor-chip" data-flavor="Matilda">Matilda</button>
+                <button type="button" class="flavor-chip" data-flavor="Bolo de Cenoura">Bolo de Cenoura</button>
+              </div>
+            </div>
+            <div class="product-footer">
+              <strong class="ovo-price">A partir de R$ 69,90</strong>
+              <button class="btn-shop btn-add-cart" data-name="Ovos de Colher" data-price="69.90">+ Carrinho</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <div class="product-img">
+            <img src="/src/img/kit mini confeiteiro.png" alt="Kit Mini Confeiteiro" loading="lazy">
+          </div>
+          <div class="product-info">
+            <h3>Kit Mini Confeiteiro (aprox. 300g)</h3>
+            <p>Diversão garantida: crie seu próprio ovo de colher!</p>
+            <div class="flavor-picker">
+              <p class="flavor-label">Descrição do kit:</p>
+            <ul>
+              <li>Caixa mini confeiteiro</li>
+              <li>1 bisnaga de brigadeiro
+                <ul class="kit-cream-options">
+                  <li>
+                    <button type="button" class="flavor-chip" data-flavor="Chocolate" data-cart-label="Kit Degustação Chocolate">Chocolate</button>
+                  </li>
+                  <li>
+                    <button type="button" class="flavor-chip" data-flavor="Ninho" data-cart-label="Kit Degustação Ninho">Ninho</button>
+                  </li>
+                </ul>
+              </li>
+              <li>Mini cenourinhas de chocolate branco</li>
+              <li>3 mini ovinhos drageados com confeitos coloridos</li>
+              <li>Balinha de goma</li>
+              <li>Disqueti</li>
+            </ul>
+            </div>
+            <div class="product-footer">
+              <strong>R$ 60,00</strong>
+              <button class="btn-shop btn-add-cart" data-name="Kit Mini Confeiteiro" data-price="60.00">+ Carrinho</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <div class="product-img">
+            <img src="/src/img/kit caca aos ovo.png" alt="Caça aos Ovos" loading="lazy">
+          </div>
+          <div class="product-info">
+            <h3>Caça aos Ovos (aprox. 120g)</h3>
+            <p>Diversão garantida: Perfeito para criar memórias em família!</p>
+            <div class="flavor-picker">
+              <p class="flavor-label">Descrição do kit:</p>
+            <ul>
+              <li>Caixinha Casinha do Coelho</li>
+              <li>6 mini ovinhos (20g cada), recheados com brigadeiro de chocolate ao leite.</li>
+              <li>8 adesivo de pegada do coelho (4 pares)</li>
+            </ul>
+            </div>
+            <div class="product-footer">
+              <strong>R$ 35,00</strong>
+              <button class="btn-shop btn-add-cart" data-name="Caça aos Ovos" data-price="35.00">+ Carrinho</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <div class="product-img">
+            <img src="/src/img/menu-degustacao.png" alt="Kit Degustação" loading="lazy">
+          </div>
+          <div class="product-info">
+            <h3>Kit degustação (aprox. 280g)</h3>
+            <p>6 Ovinhos miniatura dos nossos ovos de colher para provar nossos sabores.</p>
+            <div class="flavor-picker">
+              <p class="flavor-label">Descrição do kit:</p>
+            <ul>
+              <li>Kinder Bueno</li>
+              <li>Ferrero Rocher</li>
+              <li>Ninho com Nutella</li>
+              <li>Brigadeiro</li>
+              <li>Ninho com Geleia de Morango</li>
+              <li>Maracujá com Brigadeiro</li>
+            </ul>
+            </div>
+            <div class="product-footer">
+              <strong>R$ 50,00</strong>
+              <button class="btn-shop btn-add-cart" data-name="Kit degustação" data-price="50.00">+ Carrinho</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <div class="product-img">
+            <img src="/src/img/ovo-trufado.png" alt="Ovos de Colher" loading="lazy">
+          </div>
+          <div class="product-info">
+            <h3>Ovos Trufados</h3>
+            <p>Ovo inteiro, com casca trufada embalado em cetim.</p>
+            <div class="size-picker">
+              <p class="flavor-label">Escolha o tamanho:</p>
+              <div class="size-chips">
+                <button type="button" class="size-chip" data-size="P" data-price="89.90">
+                  <span class="size-chip-label">P</span>
+                  <span class="size-chip-detail">aprox. 370g &mdash; R$ 89,90</span>
+                </button>
+                <button type="button" class="size-chip" data-size="G" data-price="135.90">
+                  <span class="size-chip-label">G</span>
+                  <span class="size-chip-detail">aprox. 730g &mdash; R$ 135,90</span>
+                </button>
+              </div>
+            </div>
+            <div class="flavor-picker">
+              <p class="flavor-label">Escolha o sabor:</p>
+              <div class="flavor-chips">
+                <button type="button" class="flavor-chip" data-flavor="Ferrero Rocher">Ferrero Rocher</button>
+                <button type="button" class="flavor-chip" data-flavor="Cocada">Cocada</button>
+                <button type="button" class="flavor-chip" data-flavor="Brigadeiro">Brigadeiro</button>
+                <button type="button" class="flavor-chip" data-flavor="Maracujá">Maracujá</button>
+                <button type="button" class="flavor-chip" data-flavor="Maracujá com Chocolate">Maracujá com Chocolate</button>
+                <button type="button" class="flavor-chip" data-flavor="Pistache de Dubai">Pistache de Dubai</button>
+                <button type="button" class="flavor-chip" data-flavor="Cookies 'n cream">Cookies 'n cream</button>
+              </div>
+            </div>
+            <div class="product-footer">
+              <strong class="ovo-price">A partir de R$ 89,90</strong>
+              <button class="btn-shop btn-add-cart" data-name="Ovos Trufados" data-price="89.90">+ Carrinho</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="product-card">
+          <div class="product-img">
+            <img src="/src/img/ovo-trufado.png" alt="Ovos Tradicionais" loading="lazy">
+          </div>
+          <div class="product-info">
+            <h3>Ovos Tradicionais (aprox. 250g)</h3>
+            <p>Ovo de casca simples, com mini ovinhos de chocolate recheados de brigadeiro de chocolate ao leite.</p>
+            <div class="flavor-picker">
+              <p class="flavor-label">Escolha o sabor da casca:</p>
+              <div class="flavor-chips">
+                <button type="button" class="flavor-chip" data-flavor="Chocolate ao Leite">Chocolate ao Leite</button>
+                <button type="button" class="flavor-chip" data-flavor="Chocolate Branco">Chocolate Branco</button>
+                <button type="button" class="flavor-chip" data-flavor="Tipo Kinder (Chocolates branco e ao leite)">Tipo Kinder (Chocolates branco e ao leite)</button>
+                <button type="button" class="flavor-chip" data-flavor="Ao leite crocante">Ao leite crocante</button>
+              </div>
+            </div>
+            <div class="product-footer">
+              <strong class="ovo-price">R$ 60,00</strong>
+              <button class="btn-shop btn-add-cart" data-name="Ovos Tradicionais" data-price="60.00">+ Carrinho</button>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="section delivery">
+  <div class="section-head">
+    <p class="kicker">Delivery em Lavras/MG</p>
+    <h2>Entrega planejada para chegar perfeita</h2>
+  </div>
+  <div class="cards cards-features">
+    <article class="card delivery-card">
+      <span class="delivery-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 5h11v9H3z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 9h3l4 3v2h-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="7" cy="16.5" r="1.8" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="18" cy="16.5" r="1.8" stroke="currentColor" stroke-width="1.8"/>
+        </svg>
+      </span>
+      <h3>Entrega em Lavras</h3>
+      <p>Atendemos toda a cidade com cuidado no transporte para manter textura, temperatura e acabamento impecáveis.</p>
+    </article>
+    <article class="card delivery-card">
+      <span class="delivery-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M12 8v4l3 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <h3>Horário de pedido</h3>
+      <ul>
+        <li>Pedidos feitos até 12:00 são entregues a partir das 18:00.</li>
+        <li>Depois desse horário, programamos para o próximo dia.</li>
+      </ul>
+    </article>
+    <article class="card delivery-card">
+      <span class="delivery-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <h3>Agendamento</h3>
+      <p>Você pode agendar seu pedido para retirada e garantir tudo pronto no horário ideal para sua comemoração.</p>
+    </article>
+  </div>
+    </section>
+    
+    <section class="section" id="historia">
+  <div class="historia-layout">
+    <figure class="historia-media">
+      <img src="/src/img/luana.png" alt="Doces artesanais da Arteafeto" loading="lazy">
+    </figure>
+    <div class="historia-content">
+      <p class="kicker">Nossa essência</p>
+      <h2>Feito com amor em cada detalhe</h2>
+      <h3>Quem sou eu</h3>
+      <p>Meu nome é Luana, tenho 22 anos e sou apaixonada por cozinhar. Cada doce é feito de forma 100% artesanal, pensado para transmitir aconchego e carinho em cada detalhe.</p>
+      <h3>Minha história</h3>
+      <p>Cresci em uma família de cozinheiros, e foi ali que nasceu meu amor pela culinária. Hoje sigo trilhando meu próprio caminho, levando comigo essa herança de dedicação e afeto.</p>
+      <h3>Meu propósito</h3>
+      <p>Para mim, a confeitaria é uma forma de expressar amor e cuidado. Meu objetivo é entregar felicidade em forma de doce e tornar seus momentos ainda mais especiais.</p>
+    </div>
+  </div>
+</section>
+  </main>
+
+  <section class="order-cta" aria-label="Chamada para pedido via WhatsApp">
+    <p>FAÇA AGORA O SEU PEDIDO PELO WHATSAPP</p>
+    <a href="https://wa.me/5535999597652" target="_blank" rel="noopener noreferrer">Chamar no WhatsApp</a>
+  </section>
+
+  <footer id="contato">
+    <p>Arte & Afeto Confeitaria</p>
+    <p>Delivery: (35) 99959-7652 | Eventos: (35) 99959-7652</p>
+    <p>Desde 2024 criando doces para celebrar.</p>
+  </footer>
+
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true" role="dialog" aria-label="Carrinho de compras">
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <div class="cart-panel">
+      <div class="cart-head">
+        <h2>Seu carrinho</h2>
+        <button class="cart-close" id="cartClose" aria-label="Fechar carrinho">&times;</button>
+      </div>
+      <ul class="cart-list" id="cartList"></ul>
+      <div class="cart-empty" id="cartEmpty">Nenhum item adicionado ainda.</div>
+      <div class="cart-foot" id="cartFoot">
+        <div class="cart-total">
+          <span>Total</span>
+          <strong id="cartTotal">R$ 0,00</strong>
+        </div>
+        <button class="btn-wpp" id="cartSend">Enviar pedido pelo WhatsApp</button>
+      </div>
+    </div>
+  </aside>
+
+  <script src="./src/js/main.js"></script>
+
+</body>
+</html>
