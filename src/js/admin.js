@@ -8,10 +8,6 @@ const ADMIN_ORDER_GUARD_TTL_MS = 180000;
 const ADMIN_ORDER_INFLIGHT_KEY = 'arteafeto_admin_order_inflight';
 const ADMIN_ORDER_INFLIGHT_TTL_MS = 90000;
 
-const ADMIN_USER = 'luana';
-const ADMIN_PASS = '255830Al!';
-const ADMIN_LEGACY_PASS = 'qrobeijinhohj';
-
 const loginCard = document.getElementById('loginCard');
 const dashboard = document.getElementById('dashboard');
 const loginForm = document.getElementById('loginForm');
