@@ -2,11 +2,13 @@ const AUTH_KEY = 'arteafeto_admin_logged';
 const ORDER_KEY = 'arteafeto_admin_orders';
 const EXTERNAL_ORDER_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post';
 const EXTERNAL_ORDER_LIST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders';
+const XANO_LOGIN_ENDPOINT = 'https://SEU_XANO/users/login';
 const AUTO_SYNC_INTERVAL_MS = 15000;
 const ADMIN_ORDER_GUARD_KEY = 'arteafeto_admin_order_guard';
 const ADMIN_ORDER_GUARD_TTL_MS = 180000;
 const ADMIN_ORDER_INFLIGHT_KEY = 'arteafeto_admin_order_inflight';
 const ADMIN_ORDER_INFLIGHT_TTL_MS = 90000;
+const TOKEN_KEY = 'token';
 
 const loginCard = document.getElementById('loginCard');
 const dashboard = document.getElementById('dashboard');
@@ -94,6 +96,69 @@ const PRICE_BY_PRODUCT = {
 
 function formatCurrency(value) {
   return 'R$ ' + value.toFixed(2).replace('.', ',');
+}
+
+function getAuthToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+function setAuthToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(AUTH_KEY, 'true');
+}
+
+function clearAuthToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(AUTH_KEY);
+}
+
+function redirectToLogin() {
+  loginMessage.textContent = 'Faça login para acessar o painel.';
+  showLogin();
+}
+
+async function authFetch(url, options = {}) {
+  const token = getAuthToken();
+  if (!token) {
+    redirectToLogin();
+    throw new Error('Token ausente');
+  }
+
+  const headers = {
+    ...(options.headers || {}),
+    Authorization: `Bearer ${token}`
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    clearAuthToken();
+    redirectToLogin();
+    throw new Error('Sessão expirada ou não autorizada');
+  }
+
+  return response;
+}
+
+async function loginWithXano(email, password) {
+  const response = await fetch(XANO_LOGIN_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.authToken) {
+    throw new Error('Login inválido');
+  }
+
+  return data;
 }
 
 function formatDate(dateValue) {
@@ -464,7 +529,7 @@ function markAdminOrderAsSent(order) {
 
 async function sendOrderToExternalApi(order) {
   const payload = buildExternalOrderPayload(order);
-  const response = await fetch(EXTERNAL_ORDER_ENDPOINT, {
+  const response = await authFetch(EXTERNAL_ORDER_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -484,7 +549,7 @@ async function sendOrderToExternalApi(order) {
 }
 
 async function deleteOrderFromExternalApi(orderId) {
-  const response = await fetch(`${EXTERNAL_ORDER_LIST_ENDPOINT}/${orderId}`, {
+  const response = await authFetch(`${EXTERNAL_ORDER_LIST_ENDPOINT}/${orderId}`, {
     method: 'DELETE'
   });
 
@@ -495,7 +560,7 @@ async function deleteOrderFromExternalApi(orderId) {
 
 async function listarPedidos() {
   try {
-    const response = await fetch(EXTERNAL_ORDER_LIST_ENDPOINT);
+    const response = await authFetch(EXTERNAL_ORDER_LIST_ENDPOINT);
     if (!response.ok) {
       throw new Error(`Falha ao listar pedidos. Status: ${response.status}`);
     }
@@ -787,28 +852,29 @@ function closeConfirmDeleteModal() {
 }
 
 function isLoggedIn() {
-  return localStorage.getItem(AUTH_KEY) === 'true';
+  return Boolean(getAuthToken());
 }
 
-loginForm?.addEventListener('submit', (event) => {
+loginForm?.addEventListener('submit', async (event) => {
   event.preventDefault();
 
-  const username = String(loginForm.username.value || '').trim();
+  const email = String(document.getElementById('email')?.value || '').trim();
   const password = String(loginForm.password.value || '').trim();
 
-  if (username === ADMIN_USER && (password === ADMIN_PASS || password === ADMIN_LEGACY_PASS)) {
-    localStorage.setItem(AUTH_KEY, 'true');
+  try {
+    const data = await loginWithXano(email, password);
+    setAuthToken(data.authToken);
     loginMessage.textContent = '';
     showDashboard();
     loginForm.reset();
-    return;
+  } catch (error) {
+    console.error(error);
+    loginMessage.textContent = 'Login inválido.';
   }
-
-  loginMessage.textContent = 'Usuario ou senha invalidos.';
 });
 
 logoutBtn?.addEventListener('click', () => {
-  localStorage.removeItem(AUTH_KEY);
+  clearAuthToken();
   showLogin();
 });
 

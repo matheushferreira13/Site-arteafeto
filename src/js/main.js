@@ -155,11 +155,17 @@ function buildXanoOrderPayload(order) {
 }
 
 async function sendOrderToXano(order) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
   const response = await fetch(XANO_ORDER_POST_ENDPOINT, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers,
     body: JSON.stringify(buildXanoOrderPayload(order))
   });
 
