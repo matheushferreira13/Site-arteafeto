@@ -64,8 +64,46 @@
         </article>
       </div>
 
+      <div class="dashboard-actions">
+        <button class="btn" id="openOrderModalBtn" type="button">Novo pedido</button>
+      </div>
+
       <section class="panel">
-        <h3>Novo pedido</h3>
+        <div class="table-head">
+          <h3>Pedidos cadastrados</h3>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Data de entrega</th>
+                <th>Produto</th>
+                <th>Tamanho</th>
+                <th>Sabor</th>
+                <th>Quantidade</th>
+                <th>Cidade</th>
+                <th>Forma de pagamento</th>
+                <th>Valor</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody"></tbody>
+          </table>
+          <p class="empty-row" id="emptyTableMessage">Nenhum pedido cadastrado ainda.</p>
+        </div>
+      </section>
+    </section>
+
+    <div class="modal hidden" id="orderModal" aria-hidden="true">
+      <div class="modal-backdrop" id="orderModalBackdrop"></div>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="orderModalTitle">
+        <div class="modal-head">
+          <h3 id="orderModalTitle">Novo pedido</h3>
+          <button class="modal-close" id="closeOrderModalBtn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
         <form id="orderForm" class="order-form" novalidate>
           <label>Cliente
             <input type="text" name="cliente" required>
@@ -74,13 +112,27 @@
             <input type="date" name="dataEntrega" required>
           </label>
           <label>Produto
-            <input type="text" name="produto" required>
+            <select name="produto" id="produtoSelect" required>
+              <option value="">Selecione...</option>
+              <option value="Ovo de colher">Ovo de colher</option>
+              <option value="Kit mini confeiteiro">Kit mini confeiteiro</option>
+              <option value="Caça aos ovos">Caça aos ovos</option>
+              <option value="Kit degustação">Kit degustação</option>
+              <option value="Ovos trufados">Ovos trufados</option>
+              <option value="Ovos tradicionais">Ovos tradicionais</option>
+            </select>
           </label>
-          <label>Tamanho
-            <input type="text" name="tamanho" required placeholder="P, G ou unico">
+          <label id="sizeField" class="hidden">Tamanho
+            <select name="tamanho" id="sizeSelect">
+              <option value="">Selecione...</option>
+              <option value="P">P</option>
+              <option value="G">G</option>
+            </select>
           </label>
-          <label>Sabor
-            <input type="text" name="sabor" required>
+          <label id="flavorField" class="hidden">Sabor
+            <select name="sabor" id="flavorSelect">
+              <option value="">Selecione...</option>
+            </select>
           </label>
           <label>Quantidade
             <input type="number" name="quantidade" min="1" step="1" required>
@@ -92,16 +144,6 @@
               <option value="Campo Belo">Campo Belo</option>
               <option value="Outra">Outra</option>
             </select>
-          </label>
-          <label>Entrega
-            <select name="entrega" required>
-              <option value="">Selecione...</option>
-              <option value="Delivery">Delivery</option>
-              <option value="Retirada">Retirada</option>
-            </select>
-          </label>
-          <label>Data da entrega
-            <input type="date" name="dataDaEntrega" required>
           </label>
           <label>Forma de pagamento
             <select name="formaPagamento" required>
@@ -119,35 +161,7 @@
           <button class="btn" type="submit">Adicionar pedido</button>
         </form>
       </section>
-
-      <section class="panel">
-        <div class="table-head">
-          <h3>Pedidos cadastrados</h3>
-          <button class="btn btn-outline" id="clearOrdersBtn" type="button">Limpar tabela</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Data de entrega</th>
-                <th>Produto</th>
-                <th>Tamanho</th>
-                <th>Sabor</th>
-                <th>Quantidade</th>
-                <th>Cidade</th>
-                <th>Entrega</th>
-                <th>Data da entrega</th>
-                <th>Forma de pagamento</th>
-                <th>Valor</th>
-              </tr>
-            </thead>
-            <tbody id="ordersTableBody"></tbody>
-          </table>
-          <p class="empty-row" id="emptyTableMessage">Nenhum pedido cadastrado ainda.</p>
-        </div>
-      </section>
-    </section>
+    </div>
   </main>
 
   <script src="./src/js/admin.js"></script>

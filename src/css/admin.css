@@ -171,6 +171,11 @@ select:focus {
   font-size: clamp(2rem, 3vw, 2.4rem);
 }
 
+.dashboard-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(180px, 1fr));
@@ -214,8 +219,73 @@ select:focus {
   gap: 10px;
 }
 
+.order-form label.hidden {
+  display: none !important;
+}
+
 .order-form .btn {
   align-self: end;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(42, 33, 30, 0.46);
+  backdrop-filter: blur(2px);
+}
+
+.modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(980px, 100%);
+  max-height: min(86vh, 860px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 253, 250, 0.97);
+  box-shadow: 0 20px 44px rgba(42, 33, 30, 0.25);
+  padding: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.modal-head h3 {
+  font-size: 1.6rem;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--accent);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close:hover {
+  border-color: var(--accent-soft);
+  background: var(--surface-soft);
 }
 
 .table-head {
@@ -235,16 +305,18 @@ select:focus {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 980px;
+  min-width: 860px;
 }
 
 th,
 td {
   border-bottom: 1px solid #f2e7dc;
-  padding: 10px;
-  text-align: left;
+  padding: 12px 10px;
+  text-align: center;
+  vertical-align: middle;
   font-size: 0.88rem;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.35;
 }
 
 th {
@@ -253,10 +325,53 @@ th {
   background: #f9f2e9;
   color: var(--muted);
   font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+tbody tr:nth-child(even) {
+  background: #fdf9f4;
+}
+
+tbody tr:hover {
+  background: #f5ebe0;
+}
+
+tbody tr.is-canceled {
+  opacity: 0.66;
+}
+
+tbody tr.is-canceled td {
+  text-decoration: line-through;
+}
+
+.btn-cancel {
+  border: 1px solid #d8b8a0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  background: #fff;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-cancel:hover {
+  background: var(--surface-soft);
+  border-color: var(--accent-soft);
+}
+
+.btn-cancel:disabled {
+  cursor: default;
+  color: #8d7c72;
+  border-color: #dfd2c7;
+  background: #f8f4ef;
 }
 
 .empty-row {
   padding: 14px;
+  text-align: center;
   color: var(--muted);
 }
 
@@ -314,5 +429,17 @@ th {
 
   .login-card {
     margin-top: 12px;
+  }
+
+  .dashboard-actions {
+    justify-content: stretch;
+  }
+
+  .dashboard-actions .btn {
+    width: 100%;
+  }
+
+  .modal {
+    padding: 12px;
   }
 }
