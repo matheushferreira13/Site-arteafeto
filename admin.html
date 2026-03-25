@@ -15,83 +15,145 @@
     <a class="brand" href="./index.html" aria-label="Voltar para home">
       <img src="./src/img/Adesivo circular para doceria moderno ilustrado rosa e bege.png" alt="Logo Arteafeto">
       <div>
-        <p class="brand-kicker">Area administrativa</p>
+        <p class="brand-kicker">Área administrativa</p>
         <h1>Painel de pedidos</h1>
       </div>
     </a>
-    <a class="btn btn-outline" href="./index.html">Voltar para site</a>
+    <a class="btn btn-outline" href="./index.html">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Voltar para site
+    </a>
   </header>
 
   <main class="admin-main">
     <section class="login-card" id="loginCard" aria-label="Login administrativo">
-      <h2>Entrar no Admin</h2>
-      <p>Use seu usuario e senha para acessar o dashboard.</p>
+      <div class="login-logo">
+        <img src="./src/img/Adesivo circular para doceria moderno ilustrado rosa e bege.png" alt="Logo Arteafeto">
+      </div>
+      <h2>Bem-vinda de volta</h2>
+      <p>Digite suas credenciais para acessar o painel.</p>
       <form id="loginForm" novalidate>
-        <label for="username">Usuario</label>
-        <input id="username" name="username" type="text" required autocomplete="username">
-
-        <label for="password">Senha</label>
-        <input id="password" name="password" type="password" required autocomplete="current-password">
+        <label for="username">Usuário
+          <input id="username" name="username" type="text" required autocomplete="username" placeholder="seu usuário">
+        </label>
+        <label for="password">Senha
+          <input id="password" name="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+        </label>
 
         <p class="message" id="loginMessage" aria-live="polite"></p>
 
-        <button class="btn" type="submit">Acessar dashboard</button>
+        <button class="btn btn-full" type="submit">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Acessar dashboard
+        </button>
       </form>
     </section>
 
     <section class="dashboard hidden" id="dashboard" aria-label="Dashboard de pedidos">
       <div class="dashboard-head">
-        <h2>Visao geral</h2>
-        <button class="btn btn-outline" id="logoutBtn" type="button">Sair</button>
+        <div>
+          <p class="dash-kicker">Olá, Luana 👋</p>
+          <h2>Visão geral</h2>
+        </div>
+        <div class="dashboard-head-actions">
+          <button class="btn" id="openOrderModalBtn" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo pedido
+          </button>
+          <button class="btn btn-outline" id="logoutBtn" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair
+          </button>
+        </div>
       </div>
 
       <div class="kpi-grid">
         <article class="kpi-card">
-          <p>Pedidos totais</p>
-          <strong id="kpiPedidos">0</strong>
+          <div class="kpi-icon kpi-icon--rose">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="15" y2="16"/></svg>
+          </div>
+          <div class="kpi-info">
+            <p>Pedidos ativos</p>
+            <strong id="kpiPedidos">0</strong>
+          </div>
         </article>
         <article class="kpi-card">
-          <p>Valor previsto</p>
-          <strong id="kpiValor">R$ 0,00</strong>
+          <div class="kpi-icon kpi-icon--green">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="kpi-info">
+            <p>Valor previsto</p>
+            <strong id="kpiValor">R$ 0,00</strong>
+          </div>
         </article>
         <article class="kpi-card">
-          <p>Pedidos em Lavras</p>
-          <strong id="kpiLavras">0</strong>
+          <div class="kpi-icon kpi-icon--blue">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="kpi-info">
+            <p>Lavras</p>
+            <strong id="kpiLavras">0</strong>
+          </div>
         </article>
         <article class="kpi-card">
-          <p>Pedidos em Campo Belo</p>
-          <strong id="kpiCampoBelo">0</strong>
+          <div class="kpi-icon kpi-icon--amber">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="kpi-info">
+            <p>Campo Belo</p>
+            <strong id="kpiCampoBelo">0</strong>
+          </div>
         </article>
-      </div>
-
-      <div class="dashboard-actions">
-        <button class="btn" id="openOrderModalBtn" type="button">Novo pedido</button>
+        <article class="kpi-card">
+          <div class="kpi-icon kpi-icon--teal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="kpi-info">
+            <p>Cristais</p>
+            <strong id="kpiCristais">0</strong>
+          </div>
+        </article>
+        <article class="kpi-card">
+          <div class="kpi-icon kpi-icon--violet">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <div class="kpi-info">
+            <p>Coqueiral</p>
+            <strong id="kpiCoqueiral">0</strong>
+          </div>
+        </article>
       </div>
 
       <section class="panel">
         <div class="table-head">
-          <h3>Pedidos cadastrados</h3>
+          <div>
+            <h3>Pedidos cadastrados</h3>
+            <p class="table-subtitle">Pedidos do site e cadastrados manualmente</p>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
                 <th>Cliente</th>
-                <th>Data de entrega</th>
+                <th>Entrega</th>
                 <th>Produto</th>
-                <th>Tamanho</th>
+                <th>Tam.</th>
                 <th>Sabor</th>
-                <th>Quantidade</th>
+                <th>Qtd.</th>
                 <th>Cidade</th>
-                <th>Forma de pagamento</th>
+                <th>Pagamento</th>
                 <th>Valor</th>
-                <th>Status</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody id="ordersTableBody"></tbody>
           </table>
-          <p class="empty-row" id="emptyTableMessage">Nenhum pedido cadastrado ainda.</p>
+          <div class="empty-state" id="emptyTableMessage">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+            <p>Nenhum pedido ainda</p>
+            <span>Novos pedidos do site aparecem aqui automaticamente.</span>
+          </div>
         </div>
       </section>
     </section>
@@ -100,66 +162,120 @@
       <div class="modal-backdrop" id="orderModalBackdrop"></div>
       <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="orderModalTitle">
         <div class="modal-head">
-          <h3 id="orderModalTitle">Novo pedido</h3>
-          <button class="modal-close" id="closeOrderModalBtn" type="button" aria-label="Fechar modal">&times;</button>
+          <h3 id="orderModalTitle">Registrar pedido</h3>
+          <button class="modal-close" id="closeOrderModalBtn" type="button" aria-label="Fechar modal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
 
         <form id="orderForm" class="order-form" novalidate>
-          <label>Cliente
-            <input type="text" name="cliente" required>
-          </label>
-          <label>Data de entrega
-            <input type="date" name="dataEntrega" required>
-          </label>
-          <label>Produto
-            <select name="produto" id="produtoSelect" required>
-              <option value="">Selecione...</option>
-              <option value="Ovo de colher">Ovo de colher</option>
-              <option value="Kit mini confeiteiro">Kit mini confeiteiro</option>
-              <option value="Caça aos ovos">Caça aos ovos</option>
-              <option value="Kit degustação">Kit degustação</option>
-              <option value="Ovos trufados">Ovos trufados</option>
-              <option value="Ovos tradicionais">Ovos tradicionais</option>
-            </select>
-          </label>
-          <label id="sizeField" class="hidden">Tamanho
-            <select name="tamanho" id="sizeSelect">
-              <option value="">Selecione...</option>
-              <option value="P">P</option>
-              <option value="G">G</option>
-            </select>
-          </label>
-          <label id="flavorField" class="hidden">Sabor
-            <select name="sabor" id="flavorSelect">
-              <option value="">Selecione...</option>
-            </select>
-          </label>
-          <label>Quantidade
-            <input type="number" name="quantidade" min="1" step="1" required>
-          </label>
-          <label>Cidade
-            <select name="cidade" required>
-              <option value="">Selecione...</option>
-              <option value="Lavras">Lavras</option>
-              <option value="Campo Belo">Campo Belo</option>
-              <option value="Outra">Outra</option>
-            </select>
-          </label>
-          <label>Forma de pagamento
-            <select name="formaPagamento" required>
-              <option value="">Selecione...</option>
-              <option value="Pix">Pix</option>
-              <option value="Credito">Credito</option>
-              <option value="Debito">Debito</option>
-              <option value="Dinheiro">Dinheiro</option>
-            </select>
-          </label>
-          <label>Valor
-            <input type="number" name="valor" min="0" step="0.01" required>
-          </label>
+          <fieldset class="form-section">
+            <legend class="form-section-title">Cliente</legend>
+            <div class="form-row">
+              <label>Nome do cliente
+                <input type="text" name="cliente" required placeholder="Nome completo">
+              </label>
+              <label>Data de entrega
+                <input type="date" name="dataEntrega" required>
+              </label>
+              <label>Cidade
+                <select name="cidade" required>
+                  <option value="">Selecione...</option>
+                  <option value="Lavras">Lavras</option>
+                  <option value="Campo Belo">Campo Belo</option>
+                  <option value="Cristais">Cristais</option>
+                  <option value="Coqueiral">Coqueiral</option>
+                  <option value="Outra">Outra</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
 
-          <button class="btn" type="submit">Adicionar pedido</button>
+          <fieldset class="form-section">
+            <legend class="form-section-title">Pedido</legend>
+            <div class="form-row">
+              <label>Produto
+                <select name="produto" id="produtoSelect" required>
+                  <option value="">Selecione...</option>
+                  <option value="Ovo de colher">Ovo de colher</option>
+                  <option value="Kit mini confeiteiro">Kit mini confeiteiro</option>
+                  <option value="Caça aos ovos">Caça aos ovos</option>
+                  <option value="Kit degustação">Kit degustação</option>
+                  <option value="Ovos trufados">Ovos trufados</option>
+                  <option value="Ovos tradicionais">Ovos tradicionais</option>
+                </select>
+              </label>
+              <label id="sizeField" class="hidden">Tamanho
+                <select name="tamanho" id="sizeSelect">
+                  <option value="">Selecione...</option>
+                  <option value="P">P</option>
+                  <option value="G">G</option>
+                </select>
+              </label>
+              <label id="flavorField" class="hidden">Sabor
+                <select name="sabor" id="flavorSelect">
+                  <option value="">Selecione...</option>
+                </select>
+              </label>
+              <label>Quantidade
+                <input type="number" name="quantidade" min="1" step="1" required placeholder="1">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend class="form-section-title">Pagamento</legend>
+            <div class="form-row">
+              <label>Forma de pagamento
+                <select name="formaPagamento" required>
+                  <option value="">Selecione...</option>
+                  <option value="Pix">Pix</option>
+                  <option value="Crédito">Crédito</option>
+                  <option value="Débito">Débito</option>
+                  <option value="Dinheiro">Dinheiro</option>
+                </select>
+              </label>
+              <label>Valor
+                <input type="number" name="valor" min="0" step="0.01" required>
+              </label>
+            </div>
+          </fieldset>
+
+          <section class="pending-items-panel">
+            <div class="pending-items-head">
+              <p>Produtos adicionados</p>
+              <span id="pendingItemsCount">0 item</span>
+            </div>
+            <div class="pending-items-list" id="pendingItemsList"></div>
+            <p class="pending-items-empty" id="pendingItemsEmpty">Nenhum produto adicionado ainda.</p>
+          </section>
+
+          <div class="form-footer">
+            <button class="btn btn-outline" id="addOrderItemBtn" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Adicionar produto
+            </button>
+            <button class="btn btn-ghost js-close-modal" type="button">Cancelar</button>
+            <button class="btn" type="submit">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Salvar pedidos
+            </button>
+          </div>
         </form>
+      </section>
+    </div>
+
+    <div class="modal hidden" id="confirmDeleteModal" aria-hidden="true">
+      <div class="modal-backdrop" id="confirmDeleteModalBackdrop"></div>
+      <section class="modal-panel confirm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="confirmDeleteTitle">
+        <div class="confirm-modal-content">
+          <h3 id="confirmDeleteTitle">Confirmar cancelamento</h3>
+          <p>Esse pedido sera removido do painel e deletado do banco de dados. Deseja continuar?</p>
+          <div class="confirm-modal-actions">
+            <button class="btn btn-ghost" id="confirmDeleteCancelBtn" type="button">Voltar</button>
+            <button class="btn" id="confirmDeleteBtn" type="button">Sim, cancelar pedido</button>
+          </div>
+        </div>
       </section>
     </div>
   </main>

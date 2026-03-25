@@ -176,10 +176,10 @@
               <li>1 bisnaga de brigadeiro
                 <ul class="kit-cream-options">
                   <li>
-                    <button type="button" class="flavor-chip" data-flavor="Chocolate" data-cart-label="Kit Degustação Chocolate">Chocolate</button>
+                    <button type="button" class="flavor-chip" data-flavor="Chocolate" data-cart-label="Kit Mini Confeiteiro Chocolate">Chocolate</button>
                   </li>
                   <li>
-                    <button type="button" class="flavor-chip" data-flavor="Ninho" data-cart-label="Kit Degustação Ninho">Ninho</button>
+                    <button type="button" class="flavor-chip" data-flavor="Ninho" data-cart-label="Kit Mini Confeiteiro Ninho">Ninho</button>
                   </li>
                 </ul>
               </li>
@@ -396,6 +396,33 @@
           <span>Total</span>
           <strong id="cartTotal">R$ 0,00</strong>
         </div>
+        <div class="cart-customer-fields">
+          <label class="cart-field-label">Seu nome
+            <input type="text" id="cartCliente" placeholder="Como devemos te chamar?" autocomplete="name">
+          </label>
+          <label class="cart-field-label">Cidade
+            <select id="cartCidade">
+              <option value="">Selecione...</option>
+              <option value="Lavras">Lavras</option>
+              <option value="Campo Belo">Campo Belo</option>
+              <option value="Cristais">Cristais</option>
+              <option value="Coqueiral">Coqueiral</option>
+            </select>
+          </label>
+          <label class="cart-field-label">Data de entrega
+            <input type="date" id="cartDataEntrega">
+          </label>
+          <label class="cart-field-label">Pagamento
+            <select id="cartFormaPagamento">
+              <option value="">Selecione...</option>
+              <option value="Pix">Pix</option>
+              <option value="Crédito">Crédito</option>
+              <option value="Débito">Débito</option>
+              <option value="Dinheiro">Dinheiro</option>
+            </select>
+          </label>
+        </div>
+        <p class="cart-fields-error hidden" id="cartFieldsError">Preencha todos os campos acima para enviar.</p>
         <button class="btn-wpp" id="cartSend">Enviar pedido pelo WhatsApp</button>
       </div>
     </div>
