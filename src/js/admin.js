@@ -2,7 +2,8 @@ const AUTH_KEY = 'arteafeto_admin_logged';
 const ORDER_KEY = 'arteafeto_admin_orders';
 const EXTERNAL_ORDER_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post';
 const EXTERNAL_ORDER_LIST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders';
-const XANO_LOGIN_ENDPOINT = 'https://SEU_XANO/users/login';
+const XANO_LOGIN_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/login';
+const XANO_AUTH_ME_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/me';
 const AUTO_SYNC_INTERVAL_MS = 15000;
 const ADMIN_ORDER_GUARD_KEY = 'arteafeto_admin_order_guard';
 const ADMIN_ORDER_GUARD_TTL_MS = 180000;
@@ -144,20 +145,59 @@ async function authFetch(url, options = {}) {
 }
 
 async function loginWithXano(email, password) {
-  const response = await fetch(XANO_LOGIN_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
+  const attempts = [
+    {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
     },
-    body: JSON.stringify({ email, password })
-  });
+    {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+      body: new URLSearchParams({ email, password }).toString()
+    },
+    {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field_value: email, password })
+    },
+    {
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login: email, senha: password })
+    }
+  ];
 
-  const data = await response.json().catch(() => ({}));
+  let lastResponseData = {};
 
-  if (!response.ok || !data.authToken) {
-    throw new Error('Login inválido');
+  for (const attempt of attempts) {
+    const response = await fetch(XANO_LOGIN_ENDPOINT, {
+      method: 'POST',
+      headers: attempt.headers,
+      body: attempt.body
+    });
+
+    const data = await response.json().catch(() => ({}));
+    lastResponseData = data;
+    const authToken = data?.authToken || data?.auth_token || data?.token;
+
+    if (response.ok && authToken) {
+      return { ...data, authToken };
+    }
+
+    if (data?.code !== 'ERROR_CODE_INPUT_ERROR') {
+      break;
+    }
   }
 
+  const errorMessage = typeof lastResponseData?.message === 'string'
+    ? lastResponseData.message
+    : 'Login inválido';
+  throw new Error(errorMessage);
+}
+
+async function fetchAuthenticatedUser() {
+  const response = await authFetch(XANO_AUTH_ME_ENDPOINT, { method: 'GET' });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error('Não foi possível validar a sessão atual.');
+  }
   return data;
 }
 
@@ -1091,7 +1131,16 @@ updateOrderConditionalFields();
 renderPendingItems();
 
 if (isLoggedIn()) {
-  showDashboard();
+  fetchAuthenticatedUser()
+    .then(() => {
+      loginMessage.textContent = '';
+      showDashboard();
+    })
+    .catch((error) => {
+      console.error(error);
+      clearAuthToken();
+      showLogin();
+    });
 } else {
   showLogin();
 }
