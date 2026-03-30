@@ -71,7 +71,6 @@ let isSyncInProgress = false;
 let isAdminSubmitting = false;
 let pendingOrderItems = [];
 let currentAuthenticatedUser = null;
-let shouldRelockOnReturn = false;
 
 const PRODUCTS_WITH_SIZE = ['ovo de colher', 'ovos trufados'];
 
@@ -1262,17 +1261,6 @@ function showLogin() {
   setActivePanel('orders');
 }
 
-function forceReauthentication() {
-  if (!isLoggedIn() || dashboard.classList.contains('hidden')) return;
-  shouldRelockOnReturn = false;
-  clearAuthToken();
-  setAuthenticatedUser(null);
-  showLogin();
-  loginForm?.reset();
-  loginMessage.textContent = 'A sessão foi bloqueada ao voltar para a aba. Faça login novamente.';
-  document.getElementById('email')?.focus();
-}
-
 function openOrderModal() {
   if (!orderModal) return;
   orderModal.classList.remove('hidden');
@@ -1582,17 +1570,6 @@ document.addEventListener('keydown', (event) => {
 
   if (orderModal && !orderModal.classList.contains('hidden')) {
     closeOrderModal();
-  }
-});
-
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden' && !dashboard.classList.contains('hidden') && isLoggedIn()) {
-    shouldRelockOnReturn = true;
-    return;
-  }
-
-  if (document.visibilityState === 'visible' && shouldRelockOnReturn) {
-    forceReauthentication();
   }
 });
 
