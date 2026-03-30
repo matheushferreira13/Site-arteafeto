@@ -7,8 +7,10 @@
   <link rel="icon" type="image/webp" href="./src/img/Adesivo circular para doceria moderno ilustrado rosa e bege.webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./src/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="/src/img/carrossel - 1.webp" as="image" fetchpriority="high">
+  <link rel="preload" href="./src/css/style.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="./src/css/style.css"></noscript>
 </head>
 <body>
 
@@ -57,7 +59,7 @@
       <div class="carousel" aria-roledescription="carousel" aria-label="Informacoes e dicas">
         <div class="carousel-track">
           <article class="slide is-active">
-            <img src="/src/img/carrossel - 1.webp" data-desktop-src="/src/img/carrossel - 1.webp" data-mobile-src="/src/img/carrossel - 1 16x10.webp" alt="Bolos artesanais decorados" width="1920" height="823" loading="eager">
+            <img src="/src/img/carrossel - 1.webp" data-desktop-src="/src/img/carrossel - 1.webp" data-mobile-src="/src/img/carrossel - 1 16x10.webp" alt="Bolos artesanais decorados" width="1920" height="823" loading="eager" fetchpriority="high" decoding="async">
             <div class="slide-caption">
               <p>Destaque da semana</p>
             </div>

@@ -9,12 +9,14 @@ const ADMIN_ORDER_GUARD_KEY = 'arteafeto_admin_order_guard';
 const ADMIN_ORDER_GUARD_TTL_MS = 180000;
 const ADMIN_ORDER_INFLIGHT_KEY = 'arteafeto_admin_order_inflight';
 const ADMIN_ORDER_INFLIGHT_TTL_MS = 90000;
+const ADMIN_DELIVERY_STATUS_KEY = 'arteafeto_admin_delivery_status';
 const TOKEN_KEY = 'token';
 
 const loginCard = document.getElementById('loginCard');
 const dashboard = document.getElementById('dashboard');
 const loginForm = document.getElementById('loginForm');
 const loginMessage = document.getElementById('loginMessage');
+const dashKicker = document.getElementById('dashKicker');
 const logoutBtn = document.getElementById('logoutBtn');
 const openOrderModalBtn = document.getElementById('openOrderModalBtn');
 const orderModal = document.getElementById('orderModal');
@@ -39,9 +41,25 @@ const addOrderItemBtn = document.getElementById('addOrderItemBtn');
 const pendingItemsList = document.getElementById('pendingItemsList');
 const pendingItemsEmpty = document.getElementById('pendingItemsEmpty');
 const pendingItemsCount = document.getElementById('pendingItemsCount');
+const ordersCityFilter = document.getElementById('ordersCityFilter');
+const panelTabs = Array.from(document.querySelectorAll('.panel-tab'));
+const ordersPanelView = document.getElementById('ordersPanelView');
+const detailsPanelView = document.getElementById('detailsPanelView');
+const managementPanelView = document.getElementById('managementPanelView');
+const detailsTableBody = document.getElementById('detailsTableBody');
+const flavorDetailsTableBody = document.getElementById('flavorDetailsTableBody');
+const topProductLabel = document.getElementById('topProductLabel');
+const topFlavorLabel = document.getElementById('topFlavorLabel');
+const topCityLabel = document.getElementById('topCityLabel');
+const topPaymentLabel = document.getElementById('topPaymentLabel');
+const detailsTotalItemsLabel = document.getElementById('detailsTotalItemsLabel');
+const managementTableBody = document.getElementById('managementTableBody');
+const readyOrdersCount = document.getElementById('readyOrdersCount');
+const pendingOrdersCount = document.getElementById('pendingOrdersCount');
 
 const kpiPedidos = document.getElementById('kpiPedidos');
 const kpiValor = document.getElementById('kpiValor');
+const kpiItens = document.getElementById('kpiItens');
 const kpiLavras = document.getElementById('kpiLavras');
 const kpiCampoBelo = document.getElementById('kpiCampoBelo');
 const kpiCristais = document.getElementById('kpiCristais');
@@ -52,6 +70,8 @@ let syncIntervalId = null;
 let isSyncInProgress = false;
 let isAdminSubmitting = false;
 let pendingOrderItems = [];
+let currentAuthenticatedUser = null;
+let shouldRelockOnReturn = false;
 
 const PRODUCTS_WITH_SIZE = ['ovo de colher', 'ovos trufados'];
 
@@ -97,6 +117,34 @@ const PRICE_BY_PRODUCT = {
 
 function formatCurrency(value) {
   return 'R$ ' + value.toFixed(2).replace('.', ',');
+}
+
+function humanizeUserLabel(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^[^@]+@/, (match) => match.slice(0, -1))
+    .replace(/[._-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\p{L}/gu, (char) => char.toUpperCase());
+}
+
+function getAuthenticatedUserLabel(user) {
+  if (!user || typeof user !== 'object') return 'Olá 👋';
+
+  const rawLabel = user.nome || user.name || user.login || user.username || user.email || '';
+  const label = humanizeUserLabel(rawLabel) || 'Olá';
+  return `Olá, ${label} 👋`;
+}
+
+function updateDashboardGreeting() {
+  if (!dashKicker) return;
+  dashKicker.textContent = getAuthenticatedUserLabel(currentAuthenticatedUser);
+}
+
+function setAuthenticatedUser(user) {
+  currentAuthenticatedUser = user && typeof user === 'object' ? user : null;
+  updateDashboardGreeting();
 }
 
 function getAuthToken() {
@@ -199,6 +247,25 @@ async function fetchAuthenticatedUser() {
     throw new Error('Não foi possível validar a sessão atual.');
   }
   return data;
+}
+
+function setActivePanel(panelName) {
+  const panelMap = {
+    orders: ordersPanelView,
+    details: detailsPanelView,
+    management: managementPanelView
+  };
+
+  panelTabs.forEach((tab) => {
+    const isActive = tab.dataset.panel === panelName;
+    tab.classList.toggle('is-active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
+  });
+
+  Object.entries(panelMap).forEach(([key, view]) => {
+    if (!view) return;
+    view.classList.toggle('hidden', key !== panelName);
+  });
 }
 
 function formatDate(dateValue) {
@@ -439,6 +506,336 @@ function getOrders() {
 
 function saveOrders(orders) {
   localStorage.setItem(ORDER_KEY, JSON.stringify(orders));
+}
+
+function populateOrdersCityFilter(orders) {
+  if (!ordersCityFilter) return;
+
+  const currentValue = ordersCityFilter.value;
+  const cities = Array.from(new Set(
+    orders
+      .map((order) => String(order.cidade || '').trim())
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'))
+  ));
+
+  ordersCityFilter.innerHTML = '<option value="">Todas as cidades</option>';
+  cities.forEach((city) => {
+    const option = document.createElement('option');
+    option.value = city;
+    option.textContent = city;
+    ordersCityFilter.appendChild(option);
+  });
+
+  if (cities.includes(currentValue)) {
+    ordersCityFilter.value = currentValue;
+  }
+}
+
+function filterOrdersBySelectedCity(orders) {
+  const selectedCity = String(ordersCityFilter?.value || '').trim();
+  if (!selectedCity) return orders;
+  return orders.filter((order) => String(order.cidade || '').trim() === selectedCity);
+}
+
+function getDeliveryStatusMap() {
+  try {
+    const raw = localStorage.getItem(ADMIN_DELIVERY_STATUS_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveDeliveryStatusMap(map) {
+  try {
+    localStorage.setItem(ADMIN_DELIVERY_STATUS_KEY, JSON.stringify(map));
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function normalizeDeliveryStatusEntry(entry) {
+  if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+    return {
+      units: entry.units && typeof entry.units === 'object' ? entry.units : {},
+      expanded: Boolean(entry.expanded)
+    };
+  }
+
+  return {
+    units: {},
+    expanded: Boolean(entry)
+  };
+}
+
+function getDeliveryGroupKey(group) {
+  return [
+    normalize(group.cliente),
+    String(group.dataEntrega || '').trim(),
+    normalize(group.cidade)
+  ].join('|');
+}
+
+function buildDeliveryUnits(group) {
+  const units = [];
+
+  group.items.forEach((item) => {
+    const quantity = Math.max(1, Number(item.quantidade || 0));
+    const sizeLabel = item.tamanho && item.tamanho !== '-' ? ` ${item.tamanho}` : '';
+    const flavorLabel = item.sabor && item.sabor !== '-' ? ` - ${item.sabor}` : '';
+    const baseLabel = `${item.produto}${sizeLabel}${flavorLabel}`;
+
+    for (let index = 0; index < quantity; index += 1) {
+      units.push({
+        key: `${item.id || group.key}:${index + 1}`,
+        label: quantity > 1 ? `${baseLabel} • item ${index + 1}` : baseLabel,
+        orderId: item.id
+      });
+    }
+  });
+
+  return units;
+}
+
+function getDeliveryGroupStatus(group, statusMap) {
+  const entry = normalizeDeliveryStatusEntry(statusMap[group.key]);
+  const units = buildDeliveryUnits(group);
+  const readyUnits = units.filter((unit) => Boolean(entry.units[unit.key])).length;
+
+  return {
+    entry,
+    units,
+    readyUnits,
+    totalUnits: units.length,
+    isReady: units.length > 0 && readyUnits === units.length,
+    isPartial: readyUnits > 0 && readyUnits < units.length
+  };
+}
+
+function setDeliveryGroupReady(group, isReady) {
+  const statusMap = getDeliveryStatusMap();
+  const units = buildDeliveryUnits(group);
+  const entry = normalizeDeliveryStatusEntry(statusMap[group.key]);
+  entry.units = {};
+  if (isReady) {
+    units.forEach((unit) => {
+      entry.units[unit.key] = true;
+    });
+  }
+  statusMap[group.key] = entry;
+  saveDeliveryStatusMap(statusMap);
+}
+
+function setDeliveryUnitReady(groupKey, unitKey, isReady) {
+  const statusMap = getDeliveryStatusMap();
+  const entry = normalizeDeliveryStatusEntry(statusMap[groupKey]);
+  entry.units[unitKey] = Boolean(isReady);
+  statusMap[groupKey] = entry;
+  saveDeliveryStatusMap(statusMap);
+}
+
+function setDeliveryGroupExpanded(groupKey, isExpanded) {
+  const statusMap = getDeliveryStatusMap();
+  const entry = normalizeDeliveryStatusEntry(statusMap[groupKey]);
+  entry.expanded = Boolean(isExpanded);
+  statusMap[groupKey] = entry;
+  saveDeliveryStatusMap(statusMap);
+}
+
+function groupOrdersForDelivery(orders) {
+  const groups = new Map();
+
+  orders.forEach((order) => {
+    const groupKey = [normalize(order.cliente), String(order.dataEntrega || '').trim(), normalize(order.cidade)].join('|');
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, {
+        key: groupKey,
+        cliente: order.cliente,
+        dataEntrega: order.dataEntrega,
+        cidade: order.cidade,
+        items: [],
+        totalQuantidade: 0
+      });
+    }
+
+    const group = groups.get(groupKey);
+    group.items.push(order);
+    group.totalQuantidade += Number(order.quantidade || 0);
+  });
+
+  return Array.from(groups.values()).sort((a, b) => String(a.dataEntrega).localeCompare(String(b.dataEntrega)));
+}
+
+function buildLeaderboard(entries) {
+  if (!entries || entries.length === 0) return '-';
+  return entries.reduce((top, current) => current.count > top.count ? current : top).label;
+}
+
+function buildFlavorLabel(order) {
+  const productLabel = String(order?.produto || '-').trim() || '-';
+  const flavorLabel = String(order?.sabor || '-').trim() || '-';
+
+  if (flavorLabel === '-' || !flavorLabel) {
+    return productLabel;
+  }
+
+  return `${productLabel} - ${flavorLabel}`;
+}
+
+function renderDetailsView(orders) {
+  if (!detailsTableBody || !flavorDetailsTableBody || !topProductLabel || !topFlavorLabel || !topCityLabel || !topPaymentLabel) return;
+
+  const productMap = new Map();
+  const flavorMap = new Map();
+  const cityMap = new Map();
+  const paymentMap = new Map();
+
+  orders.forEach((order) => {
+    const productKey = normalize(order.produto) || '-';
+    const existingProduct = productMap.get(productKey) || {
+      label: order.produto || '-',
+      pedidos: 0,
+      itens: 0,
+      valor: 0
+    };
+    existingProduct.pedidos += 1;
+    existingProduct.itens += Number(order.quantidade || 0);
+    existingProduct.valor += Number(order.valor || 0);
+    productMap.set(productKey, existingProduct);
+
+    const flavorLabel = buildFlavorLabel(order);
+    const flavorKey = `${normalize(order.produto)}|${normalize(order.sabor) || '-'}`;
+    const existingFlavor = flavorMap.get(flavorKey) || {
+      label: flavorLabel,
+      pedidos: 0,
+      itens: 0
+    };
+    existingFlavor.pedidos += 1;
+    existingFlavor.itens += Number(order.quantidade || 0);
+    flavorMap.set(flavorKey, existingFlavor);
+
+    const cityKey = normalize(order.cidade) || '-';
+    cityMap.set(cityKey, {
+      label: order.cidade || '-',
+      count: (cityMap.get(cityKey)?.count || 0) + 1
+    });
+
+    const paymentKey = normalize(order.formaPagamento) || '-';
+    paymentMap.set(paymentKey, {
+      label: order.formaPagamento || '-',
+      count: (paymentMap.get(paymentKey)?.count || 0) + 1
+    });
+  });
+
+  const productRows = Array.from(productMap.values()).sort((a, b) => b.itens - a.itens || b.valor - a.valor);
+  const flavorRows = Array.from(flavorMap.values()).sort((a, b) => b.itens - a.itens || b.pedidos - a.pedidos);
+  const totalItems = orders.reduce((sum, order) => sum + Number(order.quantidade || 0), 0);
+  topProductLabel.textContent = productRows[0]?.label || '-';
+  topFlavorLabel.textContent = flavorRows[0]?.label || '-';
+  topCityLabel.textContent = buildLeaderboard(Array.from(cityMap.values()));
+  topPaymentLabel.textContent = buildLeaderboard(Array.from(paymentMap.values()));
+  if (detailsTotalItemsLabel) {
+    detailsTotalItemsLabel.textContent = String(totalItems);
+  }
+
+  if (productRows.length === 0) {
+    detailsTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum dado para detalhar ainda.</td></tr>';
+    flavorDetailsTableBody.innerHTML = '<tr><td colspan="3" class="empty-row">Nenhum sabor registrado ainda.</td></tr>';
+    return;
+  }
+
+  detailsTableBody.innerHTML = productRows.map((item) => `
+    <tr>
+      <td>${item.label}</td>
+      <td>${item.pedidos}</td>
+      <td>${item.itens}</td>
+      <td>${formatCurrency(item.valor)}</td>
+    </tr>
+  `).join('');
+
+  flavorDetailsTableBody.innerHTML = flavorRows.length === 0
+    ? '<tr><td colspan="3" class="empty-row">Nenhum sabor registrado ainda.</td></tr>'
+    : flavorRows.map((item) => `
+      <tr>
+        <td>${item.label}</td>
+        <td>${item.pedidos}</td>
+        <td>${item.itens}</td>
+      </tr>
+    `).join('');
+}
+
+function renderManagementView(orders) {
+  if (!managementTableBody || !readyOrdersCount || !pendingOrdersCount) return;
+
+  const deliveryGroups = groupOrdersForDelivery(orders);
+  const statusMap = getDeliveryStatusMap();
+  let readyCount = 0;
+
+  if (deliveryGroups.length === 0) {
+    managementTableBody.innerHTML = '<tr><td colspan="6" class="empty-row">Nenhuma entrega para gerenciar ainda.</td></tr>';
+    readyOrdersCount.textContent = '0';
+    pendingOrdersCount.textContent = '0';
+    return;
+  }
+
+  managementTableBody.innerHTML = deliveryGroups.map((group) => {
+    const groupStatus = getDeliveryGroupStatus(group, statusMap);
+    const isExpandable = groupStatus.totalUnits > 1;
+    const isExpanded = groupStatus.entry.expanded && isExpandable;
+    if (groupStatus.isReady) readyCount += 1;
+    const productsLabel = group.items.map((item) => `${item.produto} x${item.quantidade}`).join(' | ');
+    const statusClass = groupStatus.isReady
+      ? 'status-badge--ready'
+      : groupStatus.isPartial
+        ? 'status-badge--partial'
+        : 'status-badge--pending';
+    const statusLabel = groupStatus.isReady
+      ? 'Pronto'
+      : groupStatus.isPartial
+        ? 'Parcial'
+        : 'Pendente';
+    const actionButton = isExpandable
+      ? `<button class="btn-expand" type="button" data-action="toggle-management-group" data-group-key="${group.key}" aria-expanded="${isExpanded}">${isExpanded ? 'Recolher itens' : 'Expandir itens'}</button>`
+      : `<button class="btn-status-toggle" type="button" data-action="toggle-delivery-status" data-group-key="${group.key}" data-unit-key="${groupStatus.units[0]?.key || ''}">${groupStatus.isReady ? 'Marcar pendente' : 'Marcar pronto'}</button>`;
+    const detailRow = isExpandable ? `
+      <tr class="management-details-row ${isExpanded ? '' : 'hidden'}">
+        <td colspan="6">
+          <div class="management-details-list">
+            ${groupStatus.units.map((unit) => {
+              const unitReady = Boolean(groupStatus.entry.units[unit.key]);
+              return `
+                <div class="management-detail-item">
+                  <div class="management-detail-main">
+                    <strong>${unit.label}</strong>
+                    <span>Status individual da entrega</span>
+                  </div>
+                  <div class="management-detail-meta">
+                    <span class="status-badge ${unitReady ? 'status-badge--ready' : 'status-badge--pending'}">${unitReady ? 'Pronto' : 'Pendente'}</span>
+                    <button class="btn-status-toggle" type="button" data-action="toggle-delivery-status" data-group-key="${group.key}" data-unit-key="${unit.key}">${unitReady ? 'Marcar pendente' : 'Marcar pronto'}</button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </td>
+      </tr>` : '';
+    return `
+      <tr>
+        <td>${group.cliente}</td>
+        <td>${formatDate(group.dataEntrega)}</td>
+        <td>${productsLabel}</td>
+        <td>${group.cidade}</td>
+        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+        <td>${actionButton}</td>
+      </tr>
+      ${detailRow}
+    `;
+  }).join('');
+
+  readyOrdersCount.textContent = String(readyCount);
+  pendingOrdersCount.textContent = String(deliveryGroups.length - readyCount);
 }
 
 function showToast(message, type = 'success') {
@@ -703,19 +1100,24 @@ function stopAutoSync() {
 window.syncOrdersFromExternal = syncOrdersFromExternal;
 
 function renderKpis(orders) {
-  const totalPedidos = new Set(
-    orders
-      .map((order) => normalize(order.cliente))
-      .filter(Boolean)
-  ).size;
+  const groupedOrders = groupOrdersByClient(orders);
+  const totalPedidos = groupedOrders.length;
   const totalValor = orders.reduce((sum, order) => sum + Number(order.valor || 0), 0);
-  const lavras = orders.filter((order) => normalize(order.cidade) === 'lavras').length;
-  const campoBelo = orders.filter((order) => normalize(order.cidade) === 'campo belo').length;
-  const cristais = orders.filter((order) => normalize(order.cidade) === 'cristais').length;
-  const coqueiral = orders.filter((order) => normalize(order.cidade) === 'coqueiral').length;
+  const totalItens = orders.reduce((sum, order) => sum + Number(order.quantidade || 0), 0);
+  const groupedCities = groupedOrders.map((group) => {
+    const cities = Array.from(group.cidades).map((city) => normalize(city)).filter(Boolean);
+    return cities[0] || '';
+  });
+  const lavras = groupedCities.filter((city) => city === 'lavras').length;
+  const campoBelo = groupedCities.filter((city) => city === 'campo belo').length;
+  const cristais = groupedCities.filter((city) => city === 'cristais').length;
+  const coqueiral = groupedCities.filter((city) => city === 'coqueiral').length;
 
   kpiPedidos.textContent = String(totalPedidos);
   kpiValor.textContent = formatCurrency(totalValor);
+  if (kpiItens) {
+    kpiItens.textContent = String(totalItens);
+  }
   kpiLavras.textContent = String(lavras);
   kpiCampoBelo.textContent = String(campoBelo);
   kpiCristais.textContent = String(cristais);
@@ -834,14 +1236,19 @@ async function cancelOrderById(orderId) {
 
 function refreshDashboard() {
   const orders = getOrders();
+  populateOrdersCityFilter(orders);
+  const filteredOrders = filterOrdersBySelectedCity(orders);
   renderKpis(orders);
-  renderTable(orders);
+  renderTable(filteredOrders);
+  renderDetailsView(filteredOrders);
+  renderManagementView(filteredOrders);
 }
 
 function showDashboard() {
   loginCard.classList.add('hidden');
   dashboard.classList.remove('hidden');
   closeOrderModal();
+  updateDashboardGreeting();
   refreshDashboard();
   startAutoSync();
   syncOrdersFromExternal({ silent: true });
@@ -852,6 +1259,18 @@ function showLogin() {
   loginCard.classList.remove('hidden');
   closeOrderModal();
   stopAutoSync();
+  setActivePanel('orders');
+}
+
+function forceReauthentication() {
+  if (!isLoggedIn() || dashboard.classList.contains('hidden')) return;
+  shouldRelockOnReturn = false;
+  clearAuthToken();
+  setAuthenticatedUser(null);
+  showLogin();
+  loginForm?.reset();
+  loginMessage.textContent = 'A sessão foi bloqueada ao voltar para a aba. Faça login novamente.';
+  document.getElementById('email')?.focus();
 }
 
 function openOrderModal() {
@@ -904,17 +1323,22 @@ loginForm?.addEventListener('submit', async (event) => {
   try {
     const data = await loginWithXano(email, password);
     setAuthToken(data.authToken);
+    const authenticatedUser = await fetchAuthenticatedUser();
+    setAuthenticatedUser(authenticatedUser);
     loginMessage.textContent = '';
     showDashboard();
     loginForm.reset();
   } catch (error) {
     console.error(error);
+    clearAuthToken();
+    setAuthenticatedUser(null);
     loginMessage.textContent = 'Login inválido.';
   }
 });
 
 logoutBtn?.addEventListener('click', () => {
   clearAuthToken();
+  setAuthenticatedUser(null);
   showLogin();
 });
 
@@ -1071,6 +1495,43 @@ ordersTableBody?.addEventListener('click', async (event) => {
   toggleButton.textContent = isExpanded ? 'Expandir' : 'Recolher';
 });
 
+managementTableBody?.addEventListener('click', (event) => {
+  const expandButton = event.target.closest('[data-action="toggle-management-group"]');
+  if (expandButton) {
+    const groupKey = String(expandButton.dataset.groupKey || '').trim();
+    if (!groupKey) return;
+
+    const statusMap = getDeliveryStatusMap();
+    const entry = normalizeDeliveryStatusEntry(statusMap[groupKey]);
+    setDeliveryGroupExpanded(groupKey, !entry.expanded);
+    renderManagementView(filterOrdersBySelectedCity(getOrders()));
+    return;
+  }
+
+  const toggleButton = event.target.closest('[data-action="toggle-delivery-status"]');
+  if (!toggleButton) return;
+
+  const groupKey = String(toggleButton.dataset.groupKey || '').trim();
+  const unitKey = String(toggleButton.dataset.unitKey || '').trim();
+  if (!groupKey || !unitKey) return;
+
+  const statusMap = getDeliveryStatusMap();
+  const entry = normalizeDeliveryStatusEntry(statusMap[groupKey]);
+  const nextValue = !Boolean(entry.units[unitKey]);
+  setDeliveryUnitReady(groupKey, unitKey, nextValue);
+  renderManagementView(filterOrdersBySelectedCity(getOrders()));
+});
+
+panelTabs.forEach((tab) => {
+  tab.addEventListener('click', () => {
+    setActivePanel(tab.dataset.panel || 'orders');
+  });
+});
+
+ordersCityFilter?.addEventListener('change', () => {
+  refreshDashboard();
+});
+
 addOrderItemBtn?.addEventListener('click', addCurrentProductToPending);
 
 pendingItemsList?.addEventListener('click', (event) => {
@@ -1124,21 +1585,36 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && !dashboard.classList.contains('hidden') && isLoggedIn()) {
+    shouldRelockOnReturn = true;
+    return;
+  }
+
+  if (document.visibilityState === 'visible' && shouldRelockOnReturn) {
+    forceReauthentication();
+  }
+});
+
 produtoSelect?.addEventListener('change', updateOrderConditionalFields);
 sizeSelect?.addEventListener('change', updateAutoValue);
 quantityInput?.addEventListener('input', updateAutoValue);
 updateOrderConditionalFields();
 renderPendingItems();
+setActivePanel('orders');
+updateDashboardGreeting();
 
 if (isLoggedIn()) {
   fetchAuthenticatedUser()
-    .then(() => {
+    .then((user) => {
+      setAuthenticatedUser(user);
       loginMessage.textContent = '';
       showDashboard();
     })
     .catch((error) => {
       console.error(error);
       clearAuthToken();
+      setAuthenticatedUser(null);
       showLogin();
     });
 } else {
