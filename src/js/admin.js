@@ -1,9 +1,11 @@
 const AUTH_KEY = 'arteafeto_admin_logged';
 const ORDER_KEY = 'arteafeto_admin_orders';
-const EXTERNAL_ORDER_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post';
-const EXTERNAL_ORDER_LIST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders';
-const XANO_LOGIN_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/login';
-const XANO_AUTH_ME_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/me';
+const API_BASE_URL = window.ARTEAFETO_API_BASE_URL || 'http://localhost:3000/api';
+const API_PRODUCTS_ENDPOINT = `${API_BASE_URL}/produtos`;
+const EXTERNAL_ORDER_ENDPOINT = `${API_BASE_URL}/orders`;
+const EXTERNAL_ORDER_LIST_ENDPOINT = `${API_BASE_URL}/orders`;
+const XANO_LOGIN_ENDPOINT = `${API_BASE_URL}/auth/login`;
+const XANO_AUTH_ME_ENDPOINT = `${API_BASE_URL}/auth/me`;
 const AUTO_SYNC_INTERVAL_MS = 15000;
 const ADMIN_ORDER_GUARD_KEY = 'arteafeto_admin_order_guard';
 const ADMIN_ORDER_GUARD_TTL_MS = 180000;
@@ -72,9 +74,67 @@ let isAdminSubmitting = false;
 let pendingOrderItems = [];
 let currentAuthenticatedUser = null;
 
-const PRODUCTS_WITH_SIZE = ['ovo de colher', 'ovos trufados'];
+const PRODUCTS_CATALOG_FALLBACK = [
+  {
+    nome: 'Ovos de Colher',
+    precoInicial: 69.9,
+    tamanhos: [
+      { tamanho: 'P', preco: 69.9 },
+      { tamanho: 'G', preco: 122.9 }
+    ],
+    sabores: [
+      'Ferrero rocher',
+      'Kinder bueno',
+      'Ninho e nutela',
+      'Ninho com geleia de morango',
+      'Maracuja com chocolate',
+      'Dois amores',
+      'Brigadeiro',
+      "Cookies n' cream",
+      'Pistache',
+      'Matilda',
+      'Bolo de cenoura'
+    ]
+  },
+  {
+    nome: 'Kit Mini Confeiteiro',
+    preco: 60
+  },
+  {
+    nome: 'Caca aos Ovos',
+    preco: 35
+  },
+  {
+    nome: 'Kit Degustacao',
+    preco: 50
+  },
+  {
+    nome: 'Ovos Trufados',
+    precoInicial: 89.9,
+    tamanhos: [
+      { tamanho: 'P', preco: 89.9 },
+      { tamanho: 'G', preco: 135.9 }
+    ],
+    sabores: [
+      'Ferreiro rocher',
+      'Cocada',
+      'Brigadeiro',
+      'Maracuja',
+      'Maracuja com chocolate',
+      'Pistache de Dubai',
+      "Cookies n' cream"
+    ]
+  },
+  {
+    nome: 'Ovos Tradicionais',
+    preco: 60,
+    sabores: ['Chocolate ao leite', 'Chocolate branco', 'Tipo kinder', 'Ao leite crocante']
+  }
+];
 
-const FLAVORS_BY_PRODUCT = {
+let PRODUCTS_WITH_SIZE = ['ovo de colher', 'ovos trufados'];
+
+let FLAVORS_BY_PRODUCT = {
   'ovo de colher': [
     'Ferrero rocher',
     'Kinder bueno',
@@ -92,8 +152,8 @@ const FLAVORS_BY_PRODUCT = {
     'Ferreiro rocher',
     'Cocada',
     'Brigadeiro',
-    'Maracujá',
-    'Maracujá com chocolate',
+    'Maracuja',
+    'Maracuja com chocolate',
     'Pistache de Dubai',
     "Cookies n' cream"
   ],
@@ -105,11 +165,11 @@ const FLAVORS_BY_PRODUCT = {
   ]
 };
 
-const PRICE_BY_PRODUCT = {
+let PRICE_BY_PRODUCT = {
   'ovo de colher': { P: 69.9, G: 122.9 },
   'kit mini confeiteiro': 60,
-  'caça aos ovos': 35,
-  'kit degustação': 50,
+  'caca aos ovos': 35,
+  'kit degustacao': 50,
   'ovos trufados': { P: 89.9, G: 135.9 },
   'ovos tradicionais': 60
 };
@@ -284,8 +344,111 @@ function parseDecimal(value) {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
+function normalizeProductLabel(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function toProductKey(value) {
+  return normalize(normalizeProductLabel(value));
+}
+
+function applyProductsCatalog(products) {
+  const catalog = Array.isArray(products) && products.length > 0 ? products : PRODUCTS_CATALOG_FALLBACK;
+
+  const productNames = [];
+  const nextProductsWithSize = [];
+  const nextFlavorsByProduct = {};
+  const nextPriceByProduct = {};
+
+  catalog.forEach((product) => {
+    const displayName = String(product?.nome || product?.name || '').trim();
+    const key = toProductKey(displayName);
+    if (!displayName || !key) return;
+
+    productNames.push(displayName);
+
+    const rawFlavors = Array.isArray(product?.sabores) ? product.sabores : [];
+    const flavors = rawFlavors
+      .map((flavor) => String(flavor || '').trim())
+      .filter(Boolean);
+
+    if (flavors.length > 0) {
+      nextFlavorsByProduct[key] = flavors;
+    }
+
+    const rawSizes = Array.isArray(product?.tamanhos) ? product.tamanhos : [];
+    const parsedSizes = rawSizes
+      .map((size) => ({
+        tamanho: String(size?.tamanho || '').trim().toUpperCase(),
+        preco: Number(size?.preco)
+      }))
+      .filter((size) => size.tamanho && Number.isFinite(size.preco));
+
+    if (parsedSizes.length > 0) {
+      nextProductsWithSize.push(key);
+      nextPriceByProduct[key] = parsedSizes.reduce((acc, size) => {
+        acc[size.tamanho] = size.preco;
+        return acc;
+      }, {});
+      return;
+    }
+
+    const singlePriceCandidates = [
+      Number(product?.preco),
+      Number(product?.price),
+      Number(product?.precoInicial)
+    ];
+
+    const singlePrice = singlePriceCandidates.find((candidate) => Number.isFinite(candidate));
+    if (Number.isFinite(singlePrice)) {
+      nextPriceByProduct[key] = singlePrice;
+    }
+  });
+
+  if (productNames.length > 0 && produtoSelect) {
+    produtoSelect.innerHTML = '<option value="">Selecione...</option>';
+    productNames.forEach((name) => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      produtoSelect.appendChild(option);
+    });
+  }
+
+  if (nextProductsWithSize.length > 0) {
+    PRODUCTS_WITH_SIZE = nextProductsWithSize;
+  }
+
+  if (Object.keys(nextFlavorsByProduct).length > 0) {
+    FLAVORS_BY_PRODUCT = nextFlavorsByProduct;
+  }
+
+  if (Object.keys(nextPriceByProduct).length > 0) {
+    PRICE_BY_PRODUCT = nextPriceByProduct;
+  }
+}
+
+async function loadProductsCatalog() {
+  try {
+    const response = await fetch(API_PRODUCTS_ENDPOINT, { method: 'GET' });
+    const data = await response.json().catch(() => []);
+
+    if (!response.ok || !Array.isArray(data)) {
+      throw new Error(`Falha ao carregar produtos da API. Status: ${response.status}`);
+    }
+
+    applyProductsCatalog(data);
+  } catch (error) {
+    console.error(error);
+    applyProductsCatalog(PRODUCTS_CATALOG_FALLBACK);
+  }
+}
+
 function getUnitPrice(product, size) {
-  const normalizedProduct = normalize(product);
+  const normalizedProduct = toProductKey(product);
   const normalizedSize = String(size || '').trim().toUpperCase();
   const priceRule = PRICE_BY_PRODUCT[normalizedProduct];
   if (typeof priceRule === 'number') return priceRule;
@@ -317,7 +480,7 @@ function setSelectOptions(selectElement, values) {
 }
 
 function updateOrderConditionalFields() {
-  const selectedProduct = normalize(produtoSelect?.value || '');
+  const selectedProduct = toProductKey(produtoSelect?.value || '');
   const showSize = PRODUCTS_WITH_SIZE.includes(selectedProduct);
   const availableFlavors = FLAVORS_BY_PRODUCT[selectedProduct] || [];
   const showFlavor = availableFlavors.length > 0;
@@ -343,7 +506,7 @@ function updateOrderConditionalFields() {
 }
 
 function getCurrentProductDraft() {
-  const selectedProduct = normalize(produtoSelect?.value || '');
+  const selectedProduct = toProductKey(produtoSelect?.value || '');
   const expectsSize = PRODUCTS_WITH_SIZE.includes(selectedProduct);
   const expectsFlavor = (FLAVORS_BY_PRODUCT[selectedProduct] || []).length > 0;
 
@@ -1576,24 +1739,31 @@ document.addEventListener('keydown', (event) => {
 produtoSelect?.addEventListener('change', updateOrderConditionalFields);
 sizeSelect?.addEventListener('change', updateAutoValue);
 quantityInput?.addEventListener('input', updateAutoValue);
-updateOrderConditionalFields();
-renderPendingItems();
-setActivePanel('orders');
-updateDashboardGreeting();
 
-if (isLoggedIn()) {
-  fetchAuthenticatedUser()
-    .then((user) => {
-      setAuthenticatedUser(user);
-      loginMessage.textContent = '';
-      showDashboard();
-    })
-    .catch((error) => {
-      console.error(error);
-      clearAuthToken();
-      setAuthenticatedUser(null);
-      showLogin();
-    });
-} else {
+async function initializeAdminApp() {
+  await loadProductsCatalog();
+  updateOrderConditionalFields();
+  renderPendingItems();
+  setActivePanel('orders');
+  updateDashboardGreeting();
+
+  if (isLoggedIn()) {
+    fetchAuthenticatedUser()
+      .then((user) => {
+        setAuthenticatedUser(user);
+        loginMessage.textContent = '';
+        showDashboard();
+      })
+      .catch((error) => {
+        console.error(error);
+        clearAuthToken();
+        setAuthenticatedUser(null);
+        showLogin();
+      });
+    return;
+  }
+
   showLogin();
 }
+
+initializeAdminApp();

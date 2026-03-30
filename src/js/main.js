@@ -131,7 +131,8 @@ function renderCart() {
 }
 
 const ADMIN_ORDER_KEY = 'arteafeto_admin_orders';
-const XANO_ORDER_POST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post';
+const API_BASE_URL = window.ARTEAFETO_API_BASE_URL || 'http://localhost:3000/api';
+const ORDER_POST_ENDPOINT = `${API_BASE_URL}/orders`;
 const CART_SUBMISSION_GUARD_KEY = 'arteafeto_cart_submission_guard';
 const CART_SUBMISSION_GUARD_TTL_MS = 120000;
 const CART_ORDER_GUARD_KEY = 'arteafeto_cart_order_guard';
@@ -163,7 +164,7 @@ async function sendOrderToXano(order) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(XANO_ORDER_POST_ENDPOINT, {
+  const response = await fetch(ORDER_POST_ENDPOINT, {
     method: 'POST',
     headers,
     body: JSON.stringify(buildXanoOrderPayload(order))
