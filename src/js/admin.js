@@ -1750,26 +1750,33 @@ function exportManagementPDF() {
   const deliveryGroups = groupOrdersForDelivery(orders);
   const statusMap = getDeliveryStatusMap();
 
+  const selectedCity = String(ordersCityFilter?.value || '').trim();
+  const cityLabel = selectedCity || 'Todas as cidades';
   const ready = Number(readyOrdersCount?.textContent || 0);
   const pending = Number(pendingOrdersCount?.textContent || 0);
+  const total = deliveryGroups.length;
 
-  const rows = deliveryGroups.map((group) => {
+  const rows = deliveryGroups.map((group, index) => {
     const groupStatus = getDeliveryGroupStatus(group, statusMap);
-    const statusLabel = groupStatus.isReady ? 'Pronto' : groupStatus.isPartial ? 'Parcial' : 'Pendente';
-    const statusColor = groupStatus.isReady ? '#1a7c4b' : groupStatus.isPartial ? '#92580a' : '#843e2e';
-    const productsLabel = group.items.map((item) => `${item.produto} x${item.quantidade}`).join(', ');
+    const isReady = groupStatus.isReady;
+    const isPartial = groupStatus.isPartial;
+    const statusLabel = isReady ? 'Pronto' : isPartial ? 'Parcial' : 'Pendente';
+    const badgeBg = isReady ? '#d4f0e2' : isPartial ? '#fef3cd' : '#fde8e4';
+    const badgeColor = isReady ? '#1a7c4b' : isPartial ? '#92580a' : '#843e2e';
+    const rowBg = index % 2 === 0 ? '#ffffff' : '#faf7f2';
+    const productsLabel = group.items.map((item) => `${item.produto} ×${item.quantidade}`).join(' · ');
     return `
-      <tr>
-        <td>${group.cliente}</td>
+      <tr style="background:${rowBg}">
+        <td style="font-weight:600">${group.cliente}</td>
         <td>${formatDate(group.dataEntrega)}</td>
-        <td>${productsLabel}</td>
+        <td style="color:#4a3530">${productsLabel}</td>
         <td>${group.cidade}</td>
-        <td style="color:${statusColor};font-weight:700">${statusLabel}</td>
+        <td><span style="display:inline-block;background:${badgeBg};color:${badgeColor};font-weight:700;font-size:10px;letter-spacing:0.04em;padding:3px 10px;border-radius:999px;text-transform:uppercase">${statusLabel}</span></td>
       </tr>`;
   }).join('');
 
-  const emptyRow = deliveryGroups.length === 0
-    ? '<tr><td colspan="5" style="text-align:center;color:#6f5a50;padding:16px">Nenhuma entrega registrada.</td></tr>'
+  const emptyRow = total === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:#6f5a50;padding:24px;font-style:italic">Nenhuma entrega registrada.</td></tr>'
     : '';
 
   const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -1779,28 +1786,170 @@ function exportManagementPDF() {
 <head>
   <meta charset="UTF-8">
   <title>Gestão de Entregas — Arteafeto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2a211e; margin: 0; padding: 24px 32px; font-size: 12px; }
-    h1 { font-size: 20px; margin: 0 0 2px; color: #843e2e; }
-    .meta { color: #6f5a50; font-size: 11px; margin-bottom: 16px; }
-    .summary { display: flex; gap: 16px; margin-bottom: 20px; }
-    .card { border: 1px solid #ead5c5; border-radius: 8px; padding: 10px 16px; min-width: 130px; }
-    .card span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #6f5a50; font-weight: 700; display: block; margin-bottom: 4px; }
-    .card strong { font-size: 22px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-    th { background: #f6eee5; color: #6f5a50; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; text-align: left; border-bottom: 1px solid #ead5c5; }
-    td { padding: 8px 10px; border-bottom: 1px solid #f0e8df; font-size: 11px; vertical-align: top; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Manrope", "Helvetica Neue", Arial, sans-serif;
+      color: #2a211e;
+      background: #faf7f2;
+      padding: 32px 40px 40px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    /* ── Header ── */
+    .doc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 2px solid #843e2e;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .brand-name {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #843e2e;
+      letter-spacing: 0.02em;
+      line-height: 1;
+    }
+    .doc-subtitle {
+      font-size: 11px;
+      color: #6f5a50;
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .doc-meta {
+      text-align: right;
+      font-size: 10.5px;
+      color: #6f5a50;
+      line-height: 1.7;
+    }
+    /* ── Filter tag ── */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      font-size: 11px;
+      color: #6f5a50;
+      font-weight: 600;
+    }
+    /* ── KPI cards ── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .kpi {
+      background: #fff;
+      border: 1px solid #ead5c5;
+      border-radius: 10px;
+      padding: 12px 16px;
+    }
+    .kpi-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6f5a50;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 30px;
+      font-weight: 700;
+      line-height: 1;
+      color: #2a211e;
+    }
+    .kpi--ready .kpi-value { color: #1a7c4b; }
+    .kpi--pending .kpi-value { color: #843e2e; }
+    /* ── Table ── */
+    .section-title {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #2a211e;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #ead5c5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(42,33,30,0.07);
+    }
+    thead tr {
+      background: #843e2e;
+    }
+    th {
+      color: #fff;
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 700;
+      padding: 10px 12px;
+      text-align: left;
+    }
+    td {
+      padding: 9px 12px;
+      font-size: 11px;
+      vertical-align: middle;
+      border-bottom: 1px solid #f0e8df;
+    }
     tr:last-child td { border-bottom: none; }
-    @media print { body { padding: 12px 16px; } }
+    tbody tr:hover { background: #fdf5ef; }
+    /* ── Footer ── */
+    .doc-footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 9.5px;
+      color: #b0948a;
+      letter-spacing: 0.04em;
+    }
+    @media print {
+      body { background: #fff; padding: 20px 24px 28px; }
+      .kpi { box-shadow: none; }
+      table { box-shadow: none; }
+    }
   </style>
 </head>
 <body>
-  <h1>Arteafeto — Gestão de Entregas</h1>
-  <p class="meta">Exportado em ${now}</p>
-  <div class="summary">
-    <div class="card"><span>Prontos</span><strong>${ready}</strong></div>
-    <div class="card"><span>Pendentes</span><strong>${pending}</strong></div>
+  <header class="doc-header">
+    <div>
+      <div class="brand-name">Arteafeto</div>
+      <div class="doc-subtitle">Relatório de Gestão de Entregas</div>
+    </div>
+    <div class="doc-meta">
+      <div><strong>Exportado em</strong></div>
+      <div>${now}</div>
+      <div style="margin-top:4px"><strong>Filtro aplicado</strong></div>
+      <div>${cityLabel}</div>
+    </div>
+  </header>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">Total de Entregas</div>
+      <div class="kpi-value">${total}</div>
+    </div>
+    <div class="kpi kpi--ready">
+      <div class="kpi-label">Prontos</div>
+      <div class="kpi-value">${ready}</div>
+    </div>
+    <div class="kpi kpi--pending">
+      <div class="kpi-label">Pendentes</div>
+      <div class="kpi-value">${pending}</div>
+    </div>
   </div>
+
+  <div class="section-title">Detalhamento de Entregas</div>
   <table>
     <thead>
       <tr>
@@ -1813,10 +1962,12 @@ function exportManagementPDF() {
     </thead>
     <tbody>${rows}${emptyRow}</tbody>
   </table>
+
+  <div class="doc-footer">Arteafeto Confeitaria Artesanal &nbsp;·&nbsp; Documento gerado automaticamente em ${now}</div>
 </body>
 </html>`;
 
-  const printWindow = window.open('', '_blank', 'width=900,height=680');
+  const printWindow = window.open('', '_blank', 'width=960,height=720');
   if (!printWindow) {
     showToast('Permita pop-ups para exportar o PDF.', 'error');
     return;
