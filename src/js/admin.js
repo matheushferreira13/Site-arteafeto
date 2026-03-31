@@ -1485,9 +1485,9 @@ loginForm?.addEventListener('submit', async (event) => {
     clearAuthToken();
     setAuthenticatedUser(null);
     if (error instanceof TypeError) {
-      loginMessage.textContent = 'Não foi possível conectar ao servidor. Verifique se o backend está ativo e tente novamente.';
+      loginMessage.textContent = 'Erro de rede: não foi possível alcançar o servidor de autenticação. Verifique sua conexão e tente novamente.';
     } else {
-      loginMessage.textContent = error.message || 'Login inválido.';
+      loginMessage.textContent = error.message || 'E-mail ou senha incorretos.';
     }
   }
 });
