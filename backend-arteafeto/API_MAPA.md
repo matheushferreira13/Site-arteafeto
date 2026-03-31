@@ -134,11 +134,21 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 
 ## 8) Deploy em producao: Railway + Cloudflare Pages
 
+### Como o Railway detecta o backend
+
+O repositorio possui arquivos estaticos (`index.html`, `admin.html`) na raiz e o backend
+em `backend-arteafeto/`. Para garantir que o Railway execute o Node.js em vez de servir
+arquivos estaticos com Caddy, dois arquivos foram adicionados na raiz do repositorio:
+
+- `railway.json` — define o startCommand e o health-check path
+- `nixpacks.toml` — forca o uso de Node.js e instala as dependencias em `backend-arteafeto/`
+
+Se precisar configurar um servico separado com Root Directory = `backend-arteafeto`,
+o arquivo `backend-arteafeto/railway.json` tambem esta disponivel para esse cenario.
+
 ### Passos para subir o backend no Railway
 
-1. Ao criar o servico no Railway, configure **Settings > Source > Root Directory** como `backend-arteafeto`.
-   Sem isso o Railway tentara executar a partir da raiz do repositorio e nao encontrara o `server.js`.
-2. No painel do Railway, va em **Settings > Variables** do servico do backend.
+1. No painel do Railway, va em **Settings > Variables** do servico do backend.
 2. Defina as seguintes variaveis de ambiente:
 
 | Variavel | Valor |
@@ -192,8 +202,8 @@ esta ativo ou a variavel `FRONTEND_URL` nao esta configurada corretamente no Rai
 	- Solucao: definir `FRONTEND_URL=https://arteafetoconfeitaria.shop` em Settings > Variables no Railway
 
 - "Application failed to respond" no Railway
-	- Causa 1: Railway tentando executar a partir da raiz do repositorio em vez de `backend-arteafeto/`
-	- Solucao 1: em Settings > Source > Root Directory do servico, definir `backend-arteafeto`
+	- Causa 1: Nixpacks detecta arquivos HTML na raiz e usa Caddy (servidor estatico em Go) em vez do Node.js
+	- Solucao 1: ja corrigido — `railway.json` e `nixpacks.toml` na raiz do repositorio forcam o uso de Node.js
 	- Causa 2: servidor nao escutando em `0.0.0.0` (Railway usa proxy IPv4)
 	- Solucao 2: ja corrigido no server.js com `app.listen(PORT, '0.0.0.0', ...)`
 
