@@ -136,7 +136,9 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 
 ### Passos para subir o backend no Railway
 
-1. No painel do Railway, va em **Settings > Variables** do servico do backend.
+1. Ao criar o servico no Railway, configure **Settings > Source > Root Directory** como `backend-arteafeto`.
+   Sem isso o Railway tentara executar a partir da raiz do repositorio e nao encontrara o `server.js`.
+2. No painel do Railway, va em **Settings > Variables** do servico do backend.
 2. Defina as seguintes variaveis de ambiente:
 
 | Variavel | Valor |
@@ -188,6 +190,12 @@ esta ativo ou a variavel `FRONTEND_URL` nao esta configurada corretamente no Rai
 - Login com "Não foi possível conectar ao servidor" (producao)
 	- Causa: variavel `FRONTEND_URL` nao configurada no Railway, ou backend offline
 	- Solucao: definir `FRONTEND_URL=https://arteafetoconfeitaria.shop` em Settings > Variables no Railway
+
+- "Application failed to respond" no Railway
+	- Causa 1: Railway tentando executar a partir da raiz do repositorio em vez de `backend-arteafeto/`
+	- Solucao 1: em Settings > Source > Root Directory do servico, definir `backend-arteafeto`
+	- Causa 2: servidor nao escutando em `0.0.0.0` (Railway usa proxy IPv4)
+	- Solucao 2: ja corrigido no server.js com `app.listen(PORT, '0.0.0.0', ...)`
 
 ## 10) Fluxo completo em 20 segundos
 
