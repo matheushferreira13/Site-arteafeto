@@ -1483,7 +1483,11 @@ loginForm?.addEventListener('submit', async (event) => {
     console.error(error);
     clearAuthToken();
     setAuthenticatedUser(null);
-    loginMessage.textContent = 'Login inválido.';
+    if (error instanceof TypeError) {
+      loginMessage.textContent = 'Não foi possível conectar ao servidor. Verifique se o backend está ativo e tente novamente.';
+    } else {
+      loginMessage.textContent = error.message || 'Login inválido.';
+    }
   }
 });
 
