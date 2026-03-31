@@ -1,3 +1,42 @@
+/* Modal de clientes por sabor */
+.flavor-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  text-decoration: underline dotted;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  transition: color 0.15s;
+}
+.flavor-link:hover,
+.flavor-link:focus {
+  color: #c89055;
+  outline: none;
+}
+
+.flavor-clients-modal-content {
+  padding: 18px 24px 24px 24px;
+  min-width: 260px;
+  max-width: 420px;
+}
+.flavor-clients-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+.flavor-clients-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+}
+.flavor-client-meta {
+  color: var(--muted);
+  font-size: 0.92em;
+}
 :root {
   --bg: #faf7f2;
   --surface: #faf7f2;

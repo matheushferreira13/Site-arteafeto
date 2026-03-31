@@ -210,30 +210,21 @@
               <strong id="detailsTotalItemsLabel">0</strong>
             </article>
           </div>
-          <div class="table-wrap">
-            <table class="details-table">
-              <thead>
-                <tr>
-                  <th>Produto</th>
-                  <th>Pedidos</th>
-                  <th>Itens</th>
-                  <th>Valor total</th>
-                </tr>
-              </thead>
-              <tbody id="detailsTableBody"></tbody>
-            </table>
-          </div>
-          <div class="table-wrap">
-            <table class="details-table details-flavors-table">
-              <thead>
-                <tr>
-                  <th>Sabor</th>
-                  <th>Pedidos</th>
-                  <th>Itens</th>
-                </tr>
-              </thead>
-              <tbody id="flavorDetailsTableBody"></tbody>
-            </table>
+          <div id="detailsTablesContainer"></div>
+          <!-- Modal de clientes por sabor -->
+          <div class="modal hidden" id="flavorClientsModal" aria-hidden="true">
+            <div class="modal-backdrop" id="flavorClientsModalBackdrop"></div>
+            <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="flavorClientsModalTitle">
+              <div class="modal-head">
+                <h3 id="flavorClientsModalTitle">Pedidos do sabor</h3>
+                <button class="modal-close" id="closeFlavorClientsModalBtn" type="button" aria-label="Fechar modal">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div class="flavor-clients-modal-content" id="flavorClientsModalContent">
+                <!-- Conteúdo dinâmico -->
+              </div>
+            </section>
           </div>
         </div>
 

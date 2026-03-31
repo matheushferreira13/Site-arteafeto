@@ -697,9 +697,11 @@ function buildDetailsSnapshot(orders) {
   const paymentMap = new Map();
 
   orders.forEach((order) => {
-    const productKey = normalize(order.produto) || '-';
+    // Produto agrupado por produto + tamanho
+    const productKey = `${normalize(order.produto)}|${normalize(order.tamanho) || '-'}`;
     const existingProduct = productMap.get(productKey) || {
       label: order.produto || '-',
+      tamanho: order.tamanho || '-',
       pedidos: 0,
       itens: 0,
       valor: 0
@@ -709,10 +711,12 @@ function buildDetailsSnapshot(orders) {
     existingProduct.valor += Number(order.valor || 0);
     productMap.set(productKey, existingProduct);
 
+    // Sabor agrupado por produto + tamanho + sabor
     const flavorLabel = buildFlavorLabel(order);
-    const flavorKey = `${normalize(order.produto)}|${normalize(order.sabor) || '-'}`;
+    const flavorKey = `${normalize(order.produto)}|${normalize(order.tamanho) || '-'}|${normalize(order.sabor) || '-'}`;
     const existingFlavor = flavorMap.get(flavorKey) || {
       label: flavorLabel,
+      tamanho: order.tamanho || '-',
       pedidos: 0,
       itens: 0
     };
@@ -754,7 +758,8 @@ function buildDetailsSnapshot(orders) {
 }
 
 function renderDetailsView(orders) {
-  if (!detailsTableBody || !flavorDetailsTableBody || !topProductLabel || !topFlavorLabel || !topCityLabel || !topPaymentLabel) return;
+  const detailsTablesContainer = document.getElementById('detailsTablesContainer');
+  if (!detailsTablesContainer || !topProductLabel || !topFlavorLabel || !topCityLabel || !topPaymentLabel) return;
   const snapshot = buildDetailsSnapshot(orders);
 
   topProductLabel.textContent = snapshot.topProduct;
@@ -766,29 +771,177 @@ function renderDetailsView(orders) {
   }
 
   if (snapshot.productRows.length === 0) {
-    detailsTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum dado para detalhar ainda.</td></tr>';
-    flavorDetailsTableBody.innerHTML = '<tr><td colspan="3" class="empty-row">Nenhum sabor registrado ainda.</td></tr>';
+    detailsTablesContainer.innerHTML = '<div class="table-wrap"><table class="details-table"><tr><td colspan="6" class="empty-row">Nenhum dado para detalhar ainda.</td></tr></table></div>';
     return;
   }
 
-  detailsTableBody.innerHTML = snapshot.productRows.map((item) => `
-    <tr>
-      <td>${item.label}</td>
-      <td>${item.pedidos}</td>
-      <td>${item.itens}</td>
-      <td>${formatCurrency(item.valor)}</td>
-    </tr>
-  `).join('');
+  // Agrupa por produto principal
+  const groupedByProduct = {};
+  snapshot.flavorRows.forEach((item) => {
+    // Extrai produto principal do label ("Produto - Sabor")
+    const [produto, ...rest] = item.label.split(' - ');
+    const key = produto.trim();
+    if (!groupedByProduct[key]) groupedByProduct[key] = [];
+    groupedByProduct[key].push(item);
+  });
 
-  flavorDetailsTableBody.innerHTML = snapshot.flavorRows.length === 0
-    ? '<tr><td colspan="3" class="empty-row">Nenhum sabor registrado ainda.</td></tr>'
-    : snapshot.flavorRows.map((item) => `
-      <tr>
-        <td>${item.label}</td>
-        <td>${item.pedidos}</td>
-        <td>${item.itens}</td>
-      </tr>
-    `).join('');
+  // Ordem dos produtos (pode ser customizada)
+  const productOrder = [
+    'Kit degustação',
+    'Ovos trufados',
+    'Ovo de colher',
+    'Kit mini confeiteiro',
+    'Caça aos ovos',
+    'Ovos tradicionais'
+  ];
+  const allProducts = Object.keys(groupedByProduct);
+  allProducts.sort((a, b) => {
+    const ia = productOrder.indexOf(a);
+    const ib = productOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
+  // Para status: precisamos dos pedidos filtrados e do mapa de status
+  const allOrders = filterOrdersBySelectedCity(getOrders());
+  const statusMap = getDeliveryStatusMap();
+
+  detailsTablesContainer.innerHTML = allProducts.map((produto) => {
+    const rows = groupedByProduct[produto];
+    return `
+      <div class="table-wrap">
+        <h4 style="margin: 0 0 8px 0; color: #843e2e; font-size: 1.1rem; font-weight: 700;">${produto}</h4>
+        <table class="details-table details-flavors-table">
+          <thead>
+            <tr>
+              <th>Sabor</th>
+              <th>Tamanho</th>
+              <th>Pedidos</th>
+              <th>Itens</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((item) => {
+              // Para status: filtra todos os pedidos desse produto/tamanho/sabor
+              const saborLabel = item.label.replace(produto + ' - ', '');
+              const pedidosDoSabor = allOrders.filter(order =>
+                normalize(order.produto) === normalize(produto) &&
+                normalize(order.tamanho) === normalize(item.tamanho) &&
+                normalize(order.sabor) === normalize(saborLabel)
+              );
+              // Agrupa por cliente/data/cidade (igual à gestão)
+              const grupos = groupOrdersForDelivery(pedidosDoSabor);
+              // Calcula status geral: se todos prontos, Pronto; se algum pronto, Parcial; senão, Pendente
+              let ready = 0, partial = 0, total = 0;
+              grupos.forEach(group => {
+                const st = getDeliveryGroupStatus(group, statusMap);
+                if (st.isReady) ready++;
+                else if (st.isPartial) partial++;
+                total++;
+              });
+              let statusClass = 'status-badge--pending', statusLabel = 'Pendente';
+              if (total > 0 && ready === total) {
+                statusClass = 'status-badge--ready'; statusLabel = 'Pronto';
+              } else if (ready > 0 || partial > 0) {
+                statusClass = 'status-badge--partial'; statusLabel = 'Parcial';
+              }
+              return `
+                <tr>
+                  <td><button class="flavor-link" type="button" data-produto="${encodeURIComponent(produto)}" data-tamanho="${encodeURIComponent(item.tamanho || '-')}" data-sabor="${encodeURIComponent(saborLabel)}">${saborLabel}</button></td>
+                  <td>${item.tamanho || '-'}</td>
+                  <td>${item.pedidos}</td>
+                  <td>${item.itens}</td>
+                  <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+// Modal de clientes por sabor
+const flavorClientsModal = document.getElementById('flavorClientsModal');
+const flavorClientsModalBackdrop = document.getElementById('flavorClientsModalBackdrop');
+const closeFlavorClientsModalBtn = document.getElementById('closeFlavorClientsModalBtn');
+const flavorClientsModalContent = document.getElementById('flavorClientsModalContent');
+
+function openFlavorClientsModal(produto, tamanho, sabor) {
+  if (!flavorClientsModal || !flavorClientsModalContent) return;
+  // Busca os pedidos filtrados
+  const orders = filterOrdersBySelectedCity(getOrders());
+  // Normaliza para comparar
+  const nProduto = normalize(produto);
+  const nTamanho = normalize(tamanho);
+  const nSabor = normalize(sabor);
+  // Filtra pedidos do sabor/tamanho/produto
+  const pedidos = orders.filter(order =>
+    normalize(order.produto) === nProduto &&
+    normalize(order.tamanho) === nTamanho &&
+    normalize(order.sabor) === nSabor
+  );
+  // Busca status de entrega
+  const statusMap = getDeliveryStatusMap();
+  // Monta lista de clientes
+  let html = '';
+  if (pedidos.length === 0) {
+    html = '<p>Nenhum pedido encontrado para este sabor/tamanho.</p>';
+  } else {
+    html = `<ul class="flavor-clients-list">` + pedidos.map(order => {
+      // Busca status na gestão
+      const groupKey = [normalize(order.cliente), String(order.dataEntrega || '').trim(), normalize(order.cidade)].join('|');
+      const group = {
+        key: groupKey,
+        cliente: order.cliente,
+        dataEntrega: order.dataEntrega,
+        cidade: order.cidade,
+        items: [order],
+        totalQuantidade: Number(order.quantidade || 0)
+      };
+      const groupStatus = getDeliveryGroupStatus(group, statusMap);
+      let statusClass = 'status-badge--pending', statusLabel = 'Pendente';
+      if (groupStatus.isReady) {
+        statusClass = 'status-badge--ready'; statusLabel = 'Pronto';
+      } else if (groupStatus.isPartial) {
+        statusClass = 'status-badge--partial'; statusLabel = 'Parcial';
+      }
+      return `<li><strong>${order.cliente}</strong> <span class="status-badge ${statusClass}">${statusLabel}</span> <span class="flavor-client-meta">(${formatDate(order.dataEntrega)} - ${order.cidade})</span></li>`;
+    }).join('') + '</ul>';
+  }
+  flavorClientsModalContent.innerHTML = html;
+  flavorClientsModal.classList.remove('hidden');
+  flavorClientsModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeFlavorClientsModal() {
+  if (!flavorClientsModal) return;
+  flavorClientsModal.classList.add('hidden');
+  flavorClientsModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+// Eventos do modal
+closeFlavorClientsModalBtn?.addEventListener('click', closeFlavorClientsModal);
+flavorClientsModalBackdrop?.addEventListener('click', closeFlavorClientsModal);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !flavorClientsModal.classList.contains('hidden')) {
+    closeFlavorClientsModal();
+  }
+});
+
+// Delegação de clique nos sabores
+document.getElementById('detailsTablesContainer')?.addEventListener('click', (event) => {
+  const btn = event.target.closest('.flavor-link');
+  if (!btn) return;
+  const produto = decodeURIComponent(btn.dataset.produto || '');
+  const tamanho = decodeURIComponent(btn.dataset.tamanho || '');
+  const sabor = decodeURIComponent(btn.dataset.sabor || '');
+  openFlavorClientsModal(produto, tamanho, sabor);
+});
 }
 
 function exportDetailsPdf() {
