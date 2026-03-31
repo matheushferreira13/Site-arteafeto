@@ -58,6 +58,7 @@ const detailsTotalItemsLabel = document.getElementById('detailsTotalItemsLabel')
 const managementTableBody = document.getElementById('managementTableBody');
 const readyOrdersCount = document.getElementById('readyOrdersCount');
 const pendingOrdersCount = document.getElementById('pendingOrdersCount');
+const exportManagementPdfBtn = document.getElementById('exportManagementPdfBtn');
 
 const kpiPedidos = document.getElementById('kpiPedidos');
 const kpiValor = document.getElementById('kpiValor');
@@ -1743,6 +1744,90 @@ document.addEventListener('keydown', (event) => {
 produtoSelect?.addEventListener('change', updateOrderConditionalFields);
 sizeSelect?.addEventListener('change', updateAutoValue);
 quantityInput?.addEventListener('input', updateAutoValue);
+
+function exportManagementPDF() {
+  const orders = filterOrdersBySelectedCity(getOrders());
+  const deliveryGroups = groupOrdersForDelivery(orders);
+  const statusMap = getDeliveryStatusMap();
+
+  const ready = Number(readyOrdersCount?.textContent || 0);
+  const pending = Number(pendingOrdersCount?.textContent || 0);
+
+  const rows = deliveryGroups.map((group) => {
+    const groupStatus = getDeliveryGroupStatus(group, statusMap);
+    const statusLabel = groupStatus.isReady ? 'Pronto' : groupStatus.isPartial ? 'Parcial' : 'Pendente';
+    const statusColor = groupStatus.isReady ? '#1a7c4b' : groupStatus.isPartial ? '#92580a' : '#843e2e';
+    const productsLabel = group.items.map((item) => `${item.produto} x${item.quantidade}`).join(', ');
+    return `
+      <tr>
+        <td>${group.cliente}</td>
+        <td>${formatDate(group.dataEntrega)}</td>
+        <td>${productsLabel}</td>
+        <td>${group.cidade}</td>
+        <td style="color:${statusColor};font-weight:700">${statusLabel}</td>
+      </tr>`;
+  }).join('');
+
+  const emptyRow = deliveryGroups.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:#6f5a50;padding:16px">Nenhuma entrega registrada.</td></tr>'
+    : '';
+
+  const now = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestão de Entregas — Arteafeto</title>
+  <style>
+    body { font-family: "Helvetica Neue", Arial, sans-serif; color: #2a211e; margin: 0; padding: 24px 32px; font-size: 12px; }
+    h1 { font-size: 20px; margin: 0 0 2px; color: #843e2e; }
+    .meta { color: #6f5a50; font-size: 11px; margin-bottom: 16px; }
+    .summary { display: flex; gap: 16px; margin-bottom: 20px; }
+    .card { border: 1px solid #ead5c5; border-radius: 8px; padding: 10px 16px; min-width: 130px; }
+    .card span { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #6f5a50; font-weight: 700; display: block; margin-bottom: 4px; }
+    .card strong { font-size: 22px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    th { background: #f6eee5; color: #6f5a50; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; text-align: left; border-bottom: 1px solid #ead5c5; }
+    td { padding: 8px 10px; border-bottom: 1px solid #f0e8df; font-size: 11px; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    @media print { body { padding: 12px 16px; } }
+  </style>
+</head>
+<body>
+  <h1>Arteafeto — Gestão de Entregas</h1>
+  <p class="meta">Exportado em ${now}</p>
+  <div class="summary">
+    <div class="card"><span>Prontos</span><strong>${ready}</strong></div>
+    <div class="card"><span>Pendentes</span><strong>${pending}</strong></div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Entrega</th>
+        <th>Produtos</th>
+        <th>Cidade</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>${rows}${emptyRow}</tbody>
+  </table>
+</body>
+</html>`;
+
+  const printWindow = window.open('', '_blank', 'width=900,height=680');
+  if (!printWindow) {
+    showToast('Permita pop-ups para exportar o PDF.', 'error');
+    return;
+  }
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+
+exportManagementPdfBtn?.addEventListener('click', exportManagementPDF);
 
 async function initializeAdminApp() {
   await loadProductsCatalog();

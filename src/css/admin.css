@@ -625,6 +625,18 @@ legend.form-section-title,
   gap: 12px;
 }
 
+.management-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px 0;
+}
+
+.management-panel-header .insights-grid--management {
+  flex: 1;
+}
+
 .insight-card {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -978,6 +990,10 @@ tbody tr:hover {
 
   .management-detail-meta {
     justify-content: flex-start;
+  }
+
+  .management-panel-header {
+    flex-direction: column;
   }
 }
 
