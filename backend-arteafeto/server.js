@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 // Libera chamadas do frontend para este backend
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
-  : ['http://localhost:5500', 'http://127.0.0.1:5500'];
+  : ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://site-arteafeto.pages.dev'];
 
 app.use(cors({
   origin: (origin, callback) => {
