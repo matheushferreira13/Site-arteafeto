@@ -35,6 +35,11 @@ app.get('/', (req, res) => {
   res.json({ message: 'Backend Arteafeto online.' });
 });
 
+// Health-check usado pelo Railway para monitorar o servico
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
 // Todas as rotas de produtos ficam abaixo de /api
 app.use('/api', produtosRouter);
 app.use('/api/auth', authRouter);
