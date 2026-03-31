@@ -131,8 +131,7 @@ function renderCart() {
 }
 
 const ADMIN_ORDER_KEY = 'arteafeto_admin_orders';
-const API_BASE_URL = window.ARTEAFETO_API_BASE_URL || 'http://localhost:3000/api';
-const ORDER_POST_ENDPOINT = `${API_BASE_URL}/orders`;
+const ORDER_POST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post';
 const CART_SUBMISSION_GUARD_KEY = 'arteafeto_cart_submission_guard';
 const CART_SUBMISSION_GUARD_TTL_MS = 120000;
 const CART_ORDER_GUARD_KEY = 'arteafeto_cart_order_guard';

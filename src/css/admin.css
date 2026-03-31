@@ -331,6 +331,22 @@ input::placeholder {
   margin-top: 2px;
 }
 
+.details-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid #efdfd1;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 251, 246, 0.96), rgba(250, 243, 235, 0.96));
+}
+
+.details-toolbar .table-subtitle {
+  margin-top: 0;
+}
+
 .order-form {
   display: grid;
   gap: 0;
@@ -1002,6 +1018,10 @@ tbody tr:hover {
     align-items: flex-start;
   }
 
+  .details-toolbar {
+    align-items: stretch;
+  }
+
   .dashboard-head-actions {
     width: 100%;
   }
@@ -1025,6 +1045,11 @@ tbody tr:hover {
 
   .dashboard-head-actions .btn {
     flex: 1;
+    justify-content: center;
+  }
+
+  .details-toolbar .btn {
+    width: 100%;
     justify-content: center;
   }
 

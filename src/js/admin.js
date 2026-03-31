@@ -1,11 +1,9 @@
 const AUTH_KEY = 'arteafeto_admin_logged';
 const ORDER_KEY = 'arteafeto_admin_orders';
-const API_BASE_URL = window.ARTEAFETO_API_BASE_URL || 'http://localhost:3000/api';
-const API_PRODUCTS_ENDPOINT = `${API_BASE_URL}/produtos`;
-const EXTERNAL_ORDER_ENDPOINT = `${API_BASE_URL}/orders`;
-const EXTERNAL_ORDER_LIST_ENDPOINT = `${API_BASE_URL}/orders`;
-const XANO_LOGIN_ENDPOINT = `${API_BASE_URL}/auth/login`;
-const XANO_AUTH_ME_ENDPOINT = `${API_BASE_URL}/auth/me`;
+const XANO_ORDER_POST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post';
+const XANO_ORDER_LIST_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders';
+const XANO_LOGIN_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/login';
+const XANO_AUTH_ME_ENDPOINT = 'https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/me';
 const AUTO_SYNC_INTERVAL_MS = 15000;
 const ADMIN_ORDER_GUARD_KEY = 'arteafeto_admin_order_guard';
 const ADMIN_ORDER_GUARD_TTL_MS = 180000;
@@ -48,6 +46,7 @@ const panelTabs = Array.from(document.querySelectorAll('.panel-tab'));
 const ordersPanelView = document.getElementById('ordersPanelView');
 const detailsPanelView = document.getElementById('detailsPanelView');
 const managementPanelView = document.getElementById('managementPanelView');
+const exportDetailsPdfBtn = document.getElementById('exportDetailsPdfBtn');
 const detailsTableBody = document.getElementById('detailsTableBody');
 const flavorDetailsTableBody = document.getElementById('flavorDetailsTableBody');
 const topProductLabel = document.getElementById('topProductLabel');
@@ -63,7 +62,6 @@ const kpiPedidos = document.getElementById('kpiPedidos');
 const kpiValor = document.getElementById('kpiValor');
 const kpiItens = document.getElementById('kpiItens');
 const kpiLavras = document.getElementById('kpiLavras');
-const kpiCampoBelo = document.getElementById('kpiCampoBelo');
 const kpiCristais = document.getElementById('kpiCristais');
 const kpiCoqueiral = document.getElementById('kpiCoqueiral');
 
@@ -74,67 +72,9 @@ let isAdminSubmitting = false;
 let pendingOrderItems = [];
 let currentAuthenticatedUser = null;
 
-const PRODUCTS_CATALOG_FALLBACK = [
-  {
-    nome: 'Ovos de Colher',
-    precoInicial: 69.9,
-    tamanhos: [
-      { tamanho: 'P', preco: 69.9 },
-      { tamanho: 'G', preco: 122.9 }
-    ],
-    sabores: [
-      'Ferrero rocher',
-      'Kinder bueno',
-      'Ninho e nutela',
-      'Ninho com geleia de morango',
-      'Maracuja com chocolate',
-      'Dois amores',
-      'Brigadeiro',
-      "Cookies n' cream",
-      'Pistache',
-      'Matilda',
-      'Bolo de cenoura'
-    ]
-  },
-  {
-    nome: 'Kit Mini Confeiteiro',
-    preco: 60
-  },
-  {
-    nome: 'Caca aos Ovos',
-    preco: 35
-  },
-  {
-    nome: 'Kit Degustacao',
-    preco: 50
-  },
-  {
-    nome: 'Ovos Trufados',
-    precoInicial: 89.9,
-    tamanhos: [
-      { tamanho: 'P', preco: 89.9 },
-      { tamanho: 'G', preco: 135.9 }
-    ],
-    sabores: [
-      'Ferreiro rocher',
-      'Cocada',
-      'Brigadeiro',
-      'Maracuja',
-      'Maracuja com chocolate',
-      'Pistache de Dubai',
-      "Cookies n' cream"
-    ]
-  },
-  {
-    nome: 'Ovos Tradicionais',
-    preco: 60,
-    sabores: ['Chocolate ao leite', 'Chocolate branco', 'Tipo kinder', 'Ao leite crocante']
-  }
-];
+const PRODUCTS_WITH_SIZE = ['ovo de colher', 'ovos trufados'];
 
-let PRODUCTS_WITH_SIZE = ['ovo de colher', 'ovos trufados'];
-
-let FLAVORS_BY_PRODUCT = {
+const FLAVORS_BY_PRODUCT = {
   'ovo de colher': [
     'Ferrero rocher',
     'Kinder bueno',
@@ -152,8 +92,8 @@ let FLAVORS_BY_PRODUCT = {
     'Ferreiro rocher',
     'Cocada',
     'Brigadeiro',
-    'Maracuja',
-    'Maracuja com chocolate',
+    'Maracujá',
+    'Maracujá com chocolate',
     'Pistache de Dubai',
     "Cookies n' cream"
   ],
@@ -165,17 +105,20 @@ let FLAVORS_BY_PRODUCT = {
   ]
 };
 
-let PRICE_BY_PRODUCT = {
+const PRICE_BY_PRODUCT = {
   'ovo de colher': { P: 69.9, G: 122.9 },
   'kit mini confeiteiro': 60,
-  'caca aos ovos': 35,
-  'kit degustacao': 50,
+  'caça aos ovos': 35,
+  'kit degustação': 50,
   'ovos trufados': { P: 89.9, G: 135.9 },
   'ovos tradicionais': 60
 };
 
 function formatCurrency(value) {
-  return 'R$ ' + value.toFixed(2).replace('.', ',');
+  return 'R$ ' + Number(value || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 }
 
 function humanizeUserLabel(value) {
@@ -344,111 +287,8 @@ function parseDecimal(value) {
   return Number.isFinite(parsedValue) ? parsedValue : 0;
 }
 
-function normalizeProductLabel(value) {
-  return String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
-}
-
-function toProductKey(value) {
-  return normalize(normalizeProductLabel(value));
-}
-
-function applyProductsCatalog(products) {
-  const catalog = Array.isArray(products) && products.length > 0 ? products : PRODUCTS_CATALOG_FALLBACK;
-
-  const productNames = [];
-  const nextProductsWithSize = [];
-  const nextFlavorsByProduct = {};
-  const nextPriceByProduct = {};
-
-  catalog.forEach((product) => {
-    const displayName = String(product?.nome || product?.name || '').trim();
-    const key = toProductKey(displayName);
-    if (!displayName || !key) return;
-
-    productNames.push(displayName);
-
-    const rawFlavors = Array.isArray(product?.sabores) ? product.sabores : [];
-    const flavors = rawFlavors
-      .map((flavor) => String(flavor || '').trim())
-      .filter(Boolean);
-
-    if (flavors.length > 0) {
-      nextFlavorsByProduct[key] = flavors;
-    }
-
-    const rawSizes = Array.isArray(product?.tamanhos) ? product.tamanhos : [];
-    const parsedSizes = rawSizes
-      .map((size) => ({
-        tamanho: String(size?.tamanho || '').trim().toUpperCase(),
-        preco: Number(size?.preco)
-      }))
-      .filter((size) => size.tamanho && Number.isFinite(size.preco));
-
-    if (parsedSizes.length > 0) {
-      nextProductsWithSize.push(key);
-      nextPriceByProduct[key] = parsedSizes.reduce((acc, size) => {
-        acc[size.tamanho] = size.preco;
-        return acc;
-      }, {});
-      return;
-    }
-
-    const singlePriceCandidates = [
-      Number(product?.preco),
-      Number(product?.price),
-      Number(product?.precoInicial)
-    ];
-
-    const singlePrice = singlePriceCandidates.find((candidate) => Number.isFinite(candidate));
-    if (Number.isFinite(singlePrice)) {
-      nextPriceByProduct[key] = singlePrice;
-    }
-  });
-
-  if (productNames.length > 0 && produtoSelect) {
-    produtoSelect.innerHTML = '<option value="">Selecione...</option>';
-    productNames.forEach((name) => {
-      const option = document.createElement('option');
-      option.value = name;
-      option.textContent = name;
-      produtoSelect.appendChild(option);
-    });
-  }
-
-  if (nextProductsWithSize.length > 0) {
-    PRODUCTS_WITH_SIZE = nextProductsWithSize;
-  }
-
-  if (Object.keys(nextFlavorsByProduct).length > 0) {
-    FLAVORS_BY_PRODUCT = nextFlavorsByProduct;
-  }
-
-  if (Object.keys(nextPriceByProduct).length > 0) {
-    PRICE_BY_PRODUCT = nextPriceByProduct;
-  }
-}
-
-async function loadProductsCatalog() {
-  try {
-    const response = await fetch(API_PRODUCTS_ENDPOINT, { method: 'GET' });
-    const data = await response.json().catch(() => []);
-
-    if (!response.ok || !Array.isArray(data)) {
-      throw new Error(`Falha ao carregar produtos da API. Status: ${response.status}`);
-    }
-
-    applyProductsCatalog(data);
-  } catch (error) {
-    console.error(error);
-    applyProductsCatalog(PRODUCTS_CATALOG_FALLBACK);
-  }
-}
-
 function getUnitPrice(product, size) {
-  const normalizedProduct = toProductKey(product);
+  const normalizedProduct = normalize(product);
   const normalizedSize = String(size || '').trim().toUpperCase();
   const priceRule = PRICE_BY_PRODUCT[normalizedProduct];
   if (typeof priceRule === 'number') return priceRule;
@@ -480,7 +320,7 @@ function setSelectOptions(selectElement, values) {
 }
 
 function updateOrderConditionalFields() {
-  const selectedProduct = toProductKey(produtoSelect?.value || '');
+  const selectedProduct = normalize(produtoSelect?.value || '');
   const showSize = PRODUCTS_WITH_SIZE.includes(selectedProduct);
   const availableFlavors = FLAVORS_BY_PRODUCT[selectedProduct] || [];
   const showFlavor = availableFlavors.length > 0;
@@ -506,7 +346,7 @@ function updateOrderConditionalFields() {
 }
 
 function getCurrentProductDraft() {
-  const selectedProduct = toProductKey(produtoSelect?.value || '');
+  const selectedProduct = normalize(produtoSelect?.value || '');
   const expectsSize = PRODUCTS_WITH_SIZE.includes(selectedProduct);
   const expectsFlavor = (FLAVORS_BY_PRODUCT[selectedProduct] || []).length > 0;
 
@@ -700,6 +540,10 @@ function filterOrdersBySelectedCity(orders) {
   return orders.filter((order) => String(order.cidade || '').trim() === selectedCity);
 }
 
+function getSelectedCityLabel() {
+  return String(ordersCityFilter?.value || '').trim() || 'Todas as cidades';
+}
+
 function getDeliveryStatusMap() {
   try {
     const raw = localStorage.getItem(ADMIN_DELIVERY_STATUS_KEY);
@@ -846,9 +690,7 @@ function buildFlavorLabel(order) {
   return `${productLabel} - ${flavorLabel}`;
 }
 
-function renderDetailsView(orders) {
-  if (!detailsTableBody || !flavorDetailsTableBody || !topProductLabel || !topFlavorLabel || !topCityLabel || !topPaymentLabel) return;
-
+function buildDetailsSnapshot(orders) {
   const productMap = new Map();
   const flavorMap = new Map();
   const cityMap = new Map();
@@ -894,21 +736,42 @@ function renderDetailsView(orders) {
   const productRows = Array.from(productMap.values()).sort((a, b) => b.itens - a.itens || b.valor - a.valor);
   const flavorRows = Array.from(flavorMap.values()).sort((a, b) => b.itens - a.itens || b.pedidos - a.pedidos);
   const totalItems = orders.reduce((sum, order) => sum + Number(order.quantidade || 0), 0);
-  topProductLabel.textContent = productRows[0]?.label || '-';
-  topFlavorLabel.textContent = flavorRows[0]?.label || '-';
-  topCityLabel.textContent = buildLeaderboard(Array.from(cityMap.values()));
-  topPaymentLabel.textContent = buildLeaderboard(Array.from(paymentMap.values()));
+  const totalValue = orders.reduce((sum, order) => sum + Number(order.valor || 0), 0);
+
+  return {
+    selectedCity: getSelectedCityLabel(),
+    totalOrders: orders.length,
+    groupedOrders: groupOrdersByClient(orders).length,
+    totalItems,
+    totalValue,
+    topProduct: productRows[0]?.label || '-',
+    topFlavor: flavorRows[0]?.label || '-',
+    topCity: buildLeaderboard(Array.from(cityMap.values())),
+    topPayment: buildLeaderboard(Array.from(paymentMap.values())),
+    productRows,
+    flavorRows
+  };
+}
+
+function renderDetailsView(orders) {
+  if (!detailsTableBody || !flavorDetailsTableBody || !topProductLabel || !topFlavorLabel || !topCityLabel || !topPaymentLabel) return;
+  const snapshot = buildDetailsSnapshot(orders);
+
+  topProductLabel.textContent = snapshot.topProduct;
+  topFlavorLabel.textContent = snapshot.topFlavor;
+  topCityLabel.textContent = snapshot.topCity;
+  topPaymentLabel.textContent = snapshot.topPayment;
   if (detailsTotalItemsLabel) {
-    detailsTotalItemsLabel.textContent = String(totalItems);
+    detailsTotalItemsLabel.textContent = String(snapshot.totalItems);
   }
 
-  if (productRows.length === 0) {
+  if (snapshot.productRows.length === 0) {
     detailsTableBody.innerHTML = '<tr><td colspan="4" class="empty-row">Nenhum dado para detalhar ainda.</td></tr>';
     flavorDetailsTableBody.innerHTML = '<tr><td colspan="3" class="empty-row">Nenhum sabor registrado ainda.</td></tr>';
     return;
   }
 
-  detailsTableBody.innerHTML = productRows.map((item) => `
+  detailsTableBody.innerHTML = snapshot.productRows.map((item) => `
     <tr>
       <td>${item.label}</td>
       <td>${item.pedidos}</td>
@@ -917,15 +780,181 @@ function renderDetailsView(orders) {
     </tr>
   `).join('');
 
-  flavorDetailsTableBody.innerHTML = flavorRows.length === 0
+  flavorDetailsTableBody.innerHTML = snapshot.flavorRows.length === 0
     ? '<tr><td colspan="3" class="empty-row">Nenhum sabor registrado ainda.</td></tr>'
-    : flavorRows.map((item) => `
+    : snapshot.flavorRows.map((item) => `
       <tr>
         <td>${item.label}</td>
         <td>${item.pedidos}</td>
         <td>${item.itens}</td>
       </tr>
     `).join('');
+}
+
+function exportDetailsPdf() {
+  const jsPDFConstructor = window.jspdf?.jsPDF;
+  if (!jsPDFConstructor) {
+    showToast('Biblioteca de PDF indisponivel no momento.', 'error');
+    return;
+  }
+
+  const filteredOrders = filterOrdersBySelectedCity(getOrders());
+  const snapshot = buildDetailsSnapshot(filteredOrders);
+  if (snapshot.productRows.length === 0) {
+    showToast('Nao ha dados na aba detalhes para exportar.', 'error');
+    return;
+  }
+
+  const doc = new jsPDFConstructor({ unit: 'pt', format: 'a4' });
+  if (typeof doc.autoTable !== 'function') {
+    showToast('Tabela PDF indisponivel no momento.', 'error');
+    return;
+  }
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  const accent = [132, 62, 46];
+  const accentSoft = [200, 144, 85];
+  const rose = [250, 243, 235];
+  const textColor = [42, 33, 30];
+  const muted = [111, 90, 80];
+  const generatedAt = new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short'
+  }).format(new Date());
+
+  const drawCard = (x, y, width, height, label, value) => {
+    doc.setFillColor(...rose);
+    doc.roundedRect(x, y, width, height, 12, 12, 'F');
+    doc.setTextColor(...muted);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(label.toUpperCase(), x + 14, y + 18);
+    doc.setTextColor(...textColor);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    const lines = doc.splitTextToSize(String(value), width - 28);
+    doc.text(lines, x + 14, y + 40);
+  };
+
+  doc.setFillColor(...accent);
+  doc.roundedRect(margin, margin, pageWidth - (margin * 2), 92, 18, 18, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('times', 'bold');
+  doc.setFontSize(24);
+  doc.text('Arteafeto', margin + 22, margin + 32);
+  doc.setFontSize(18);
+  doc.text('Relatorio da aba Detalhes', margin + 22, margin + 58);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text(`Gerado em ${generatedAt}`, pageWidth - margin - 120, margin + 28);
+  doc.text(`Filtro aplicado: ${snapshot.selectedCity}`, pageWidth - margin - 160, margin + 48);
+
+  const statY = margin + 112;
+  const cardGap = 12;
+  const cardWidth = (pageWidth - (margin * 2) - cardGap) / 2;
+  drawCard(margin, statY, cardWidth, 58, 'Cidade filtrada', snapshot.selectedCity);
+  drawCard(margin + cardWidth + cardGap, statY, cardWidth, 58, 'Valor previsto', formatCurrency(snapshot.totalValue));
+  drawCard(margin, statY + 70, cardWidth, 58, 'Pedidos no filtro', `${snapshot.totalOrders} itens de pedido`);
+  drawCard(margin + cardWidth + cardGap, statY + 70, cardWidth, 58, 'Itens totais', String(snapshot.totalItems));
+
+  doc.setTextColor(...accent);
+  doc.setFont('times', 'bold');
+  doc.setFontSize(16);
+  doc.text('Destaques do periodo', margin, statY + 158);
+
+  const highlightY = statY + 172;
+  const highlightGap = 10;
+  const highlightWidth = (pageWidth - (margin * 2) - (highlightGap * 3)) / 4;
+  drawCard(margin, highlightY, highlightWidth, 64, 'Produto lider', snapshot.topProduct);
+  drawCard(margin + (highlightWidth + highlightGap), highlightY, highlightWidth, 64, 'Sabor lider', snapshot.topFlavor);
+  drawCard(margin + ((highlightWidth + highlightGap) * 2), highlightY, highlightWidth, 64, 'Cidade lider', snapshot.topCity);
+  drawCard(margin + ((highlightWidth + highlightGap) * 3), highlightY, highlightWidth, 64, 'Pagamento lider', snapshot.topPayment);
+
+  doc.autoTable({
+    startY: highlightY + 84,
+    head: [['Produto', 'Pedidos', 'Itens', 'Valor total']],
+    body: snapshot.productRows.map((item) => [
+      item.label,
+      String(item.pedidos),
+      String(item.itens),
+      formatCurrency(item.valor)
+    ]),
+    theme: 'grid',
+    headStyles: {
+      fillColor: accent,
+      textColor: [255, 255, 255],
+      fontStyle: 'bold'
+    },
+    bodyStyles: {
+      textColor,
+      lineColor: [234, 213, 197]
+    },
+    alternateRowStyles: {
+      fillColor: [252, 247, 241]
+    },
+    styles: {
+      font: 'helvetica',
+      fontSize: 10,
+      cellPadding: 8,
+      lineWidth: 0.6,
+      lineColor: [234, 213, 197]
+    },
+    margin: { left: margin, right: margin },
+    didDrawPage: () => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...muted);
+      doc.text('Arteafeto • relatorio exportado do painel admin', margin, pageHeight - 18);
+    }
+  });
+
+  const nextY = doc.lastAutoTable.finalY + 24;
+  doc.setTextColor(...accentSoft);
+  doc.setFont('times', 'bold');
+  doc.setFontSize(15);
+  doc.text('Sabores e combinacoes', margin, nextY);
+
+  doc.autoTable({
+    startY: nextY + 10,
+    head: [['Sabor', 'Pedidos', 'Itens']],
+    body: snapshot.flavorRows.map((item) => [
+      item.label,
+      String(item.pedidos),
+      String(item.itens)
+    ]),
+    theme: 'grid',
+    headStyles: {
+      fillColor: accentSoft,
+      textColor: [42, 33, 30],
+      fontStyle: 'bold'
+    },
+    bodyStyles: {
+      textColor,
+      lineColor: [234, 213, 197]
+    },
+    alternateRowStyles: {
+      fillColor: [255, 250, 244]
+    },
+    styles: {
+      font: 'helvetica',
+      fontSize: 10,
+      cellPadding: 8,
+      lineWidth: 0.6,
+      lineColor: [234, 213, 197]
+    },
+    margin: { left: margin, right: margin },
+    didDrawPage: () => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(...muted);
+      doc.text('Arteafeto • relatorio exportado do painel admin', margin, pageHeight - 18);
+    }
+  });
+
+  const citySlug = normalize(snapshot.selectedCity).replace(/\s+/g, '-') || 'todas-as-cidades';
+  doc.save(`arteafeto-detalhes-${citySlug}.pdf`);
 }
 
 function renderManagementView(orders) {
@@ -1128,7 +1157,7 @@ function markAdminOrderAsSent(order) {
 
 async function sendOrderToExternalApi(order) {
   const payload = buildExternalOrderPayload(order);
-  const response = await authFetch(EXTERNAL_ORDER_ENDPOINT, {
+  const response = await authFetch(XANO_ORDER_POST_ENDPOINT, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -1148,7 +1177,7 @@ async function sendOrderToExternalApi(order) {
 }
 
 async function deleteOrderFromExternalApi(orderId) {
-  const response = await authFetch(`${EXTERNAL_ORDER_LIST_ENDPOINT}/${orderId}`, {
+  const response = await authFetch(`${XANO_ORDER_LIST_ENDPOINT}/${orderId}`, {
     method: 'DELETE'
   });
 
@@ -1159,7 +1188,7 @@ async function deleteOrderFromExternalApi(orderId) {
 
 async function listarPedidos() {
   try {
-    const response = await authFetch(EXTERNAL_ORDER_LIST_ENDPOINT);
+    const response = await authFetch(XANO_ORDER_LIST_ENDPOINT);
     if (!response.ok) {
       throw new Error(`Falha ao listar pedidos. Status: ${response.status}`);
     }
@@ -1271,7 +1300,6 @@ function renderKpis(orders) {
     return cities[0] || '';
   });
   const lavras = groupedCities.filter((city) => city === 'lavras').length;
-  const campoBelo = groupedCities.filter((city) => city === 'campo belo').length;
   const cristais = groupedCities.filter((city) => city === 'cristais').length;
   const coqueiral = groupedCities.filter((city) => city === 'coqueiral').length;
 
@@ -1281,7 +1309,6 @@ function renderKpis(orders) {
     kpiItens.textContent = String(totalItens);
   }
   kpiLavras.textContent = String(lavras);
-  kpiCampoBelo.textContent = String(campoBelo);
   kpiCristais.textContent = String(cristais);
   kpiCoqueiral.textContent = String(coqueiral);
 }
@@ -1683,6 +1710,8 @@ ordersCityFilter?.addEventListener('change', () => {
   refreshDashboard();
 });
 
+exportDetailsPdfBtn?.addEventListener('click', exportDetailsPdf);
+
 addOrderItemBtn?.addEventListener('click', addCurrentProductToPending);
 
 pendingItemsList?.addEventListener('click', (event) => {
@@ -1739,31 +1768,24 @@ document.addEventListener('keydown', (event) => {
 produtoSelect?.addEventListener('change', updateOrderConditionalFields);
 sizeSelect?.addEventListener('change', updateAutoValue);
 quantityInput?.addEventListener('input', updateAutoValue);
+updateOrderConditionalFields();
+renderPendingItems();
+setActivePanel('orders');
+updateDashboardGreeting();
 
-async function initializeAdminApp() {
-  await loadProductsCatalog();
-  updateOrderConditionalFields();
-  renderPendingItems();
-  setActivePanel('orders');
-  updateDashboardGreeting();
-
-  if (isLoggedIn()) {
-    fetchAuthenticatedUser()
-      .then((user) => {
-        setAuthenticatedUser(user);
-        loginMessage.textContent = '';
-        showDashboard();
-      })
-      .catch((error) => {
-        console.error(error);
-        clearAuthToken();
-        setAuthenticatedUser(null);
-        showLogin();
-      });
-    return;
-  }
-
+if (isLoggedIn()) {
+  fetchAuthenticatedUser()
+    .then((user) => {
+      setAuthenticatedUser(user);
+      loginMessage.textContent = '';
+      showDashboard();
+    })
+    .catch((error) => {
+      console.error(error);
+      clearAuthToken();
+      setAuthenticatedUser(null);
+      showLogin();
+    });
+} else {
   showLogin();
 }
-
-initializeAdminApp();
