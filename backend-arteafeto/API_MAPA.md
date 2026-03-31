@@ -141,7 +141,7 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 
 | Variavel | Valor |
 |---|---|
-| `FRONTEND_URL` | `https://site-arteafeto.pages.dev` |
+| `FRONTEND_URL` | `https://arteafetoconfeitaria.shop` |
 | `PORT` | (Railway preenche automaticamente) |
 | `XANO_LOGIN_URL` | `https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/login` |
 | `XANO_ME_URL` | `https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/me` |
@@ -152,7 +152,7 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 4. Verifique o health-check em `https://site-arteafeto-production.up.railway.app/api/health`.
 
 > **Importante**: A variavel `FRONTEND_URL` e obrigatoria para que o CORS permita chamadas
-> vindas do Cloudflare Pages. Sem ela o login e todos os fetches do painel admin serao bloqueados.
+> vindas do dominio customizado. Sem ela o login e todos os fetches do painel admin serao bloqueados.
 
 ### Verificar se o backend esta acessivel
 
@@ -187,7 +187,7 @@ esta ativo ou a variavel `FRONTEND_URL` nao esta configurada corretamente no Rai
 
 - Login com "Não foi possível conectar ao servidor" (producao)
 	- Causa: variavel `FRONTEND_URL` nao configurada no Railway, ou backend offline
-	- Solucao: definir `FRONTEND_URL=https://site-arteafeto.pages.dev` em Settings > Variables no Railway
+	- Solucao: definir `FRONTEND_URL=https://arteafetoconfeitaria.shop` em Settings > Variables no Railway
 
 ## 10) Fluxo completo em 20 segundos
 
