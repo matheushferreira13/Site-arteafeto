@@ -124,6 +124,7 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 ## 7) Variaveis importantes (.env)
 
 - PORT
+- FRONTEND_URL
 - PRODUTOS_API_URL
 - XANO_ORDER_POST_URL
 - XANO_ORDER_LIST_URL
@@ -131,7 +132,58 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 - XANO_ME_URL
 - API_KEY (se necessario)
 
-## 8) Erros comuns
+## 8) Deploy em producao: Railway + Cloudflare Pages
+
+### Como o Railway detecta o backend
+
+O repositorio possui arquivos estaticos (`index.html`, `admin.html`) na raiz e o backend
+em `backend-arteafeto/`. Para garantir que o Railway execute o Node.js em vez de servir
+arquivos estaticos com Caddy, dois arquivos foram adicionados na raiz do repositorio:
+
+- `railway.json` — define o startCommand e o health-check path
+- `nixpacks.toml` — forca o uso de Node.js e instala as dependencias em `backend-arteafeto/`
+
+Se precisar configurar um servico separado com Root Directory = `backend-arteafeto`,
+o arquivo `backend-arteafeto/railway.json` tambem esta disponivel para esse cenario.
+
+### Passos para subir o backend no Railway
+
+1. No painel do Railway, va em **Settings > Variables** do servico do backend.
+2. Defina as seguintes variaveis de ambiente:
+
+| Variavel | Valor |
+|---|---|
+| `FRONTEND_URL` | `https://arteafetoconfeitaria.shop` |
+| `PORT` | (Railway preenche automaticamente) |
+| `XANO_LOGIN_URL` | `https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/login` |
+| `XANO_ME_URL` | `https://x8ki-letl-twmt.n7.xano.io/api:_unQI8OU/auth/me` |
+| `XANO_ORDER_POST_URL` | `https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders_post` |
+| `XANO_ORDER_LIST_URL` | `https://x8ki-letl-twmt.n7.xano.io/api:i2tKJnG4/orders` |
+
+3. Apos definir as variaveis, o Railway fara redeploy automatico.
+4. Verifique o health-check em `https://site-arteafeto-production.up.railway.app/api/health`.
+
+> **Importante**: A variavel `FRONTEND_URL` e obrigatoria para que o CORS permita chamadas
+> vindas do dominio customizado. Sem ela o login e todos os fetches do painel admin serao bloqueados.
+
+### Verificar se o backend esta acessivel
+
+Abra no navegador ou Postman:
+
+```
+GET https://site-arteafeto-production.up.railway.app/api/health
+```
+
+Resposta esperada:
+
+```json
+{ "status": "ok", "uptime": 123.45 }
+```
+
+Se aparecer erro de rede ou CORS no console do navegador ao fazer login, o backend nao
+esta ativo ou a variavel `FRONTEND_URL` nao esta configurada corretamente no Railway.
+
+## 9) Erros comuns
 
 - "Cannot GET /admin.html" em localhost:3000
 	- Causa: backend API nao serve arquivo estatico
@@ -141,11 +193,21 @@ Invoke-WebRequest -UseBasicParsing "http://localhost:3000/api/produtos" | Select
 	- Causa: ja existe processo na porta 3000
 	- Solucao: encerrar processo antigo e subir backend novamente
 
-- CORS no navegador
+- CORS no navegador (desenvolvimento local)
 	- Causa: frontend e backend em portas diferentes
-	- Situacao atual: backend ja esta com cors() habilitado
+	- Situacao atual: backend ja esta com cors() habilitado para localhost:5500
 
-## 9) Fluxo completo em 20 segundos
+- Login com "Não foi possível conectar ao servidor" (producao)
+	- Causa: variavel `FRONTEND_URL` nao configurada no Railway, ou backend offline
+	- Solucao: definir `FRONTEND_URL=https://arteafetoconfeitaria.shop` em Settings > Variables no Railway
+
+- "Application failed to respond" no Railway
+	- Causa 1: Nixpacks detecta arquivos HTML na raiz e usa Caddy (servidor estatico em Go) em vez do Node.js
+	- Solucao 1: ja corrigido — `railway.json` e `nixpacks.toml` na raiz do repositorio forcam o uso de Node.js
+	- Causa 2: servidor nao escutando em `0.0.0.0` (Railway usa proxy IPv4)
+	- Solucao 2: ja corrigido no server.js com `app.listen(PORT, '0.0.0.0', ...)`
+
+## 10) Fluxo completo em 20 segundos
 
 1. Usuario abre tela no Live Server.
 2. JS da tela chama localhost:3000/api/...

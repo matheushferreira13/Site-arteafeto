@@ -1,0 +1,11 @@
+# Nixpacks build configuration for Railway deployment.
+# Without this file, Nixpacks detects index.html/admin.html at the repo root
+# as a static site and deploys with Caddy instead of Node.js.
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["cd backend-arteafeto && npm ci --omit=dev"]
+
+[start]
+cmd = "node backend-arteafeto/server.js"

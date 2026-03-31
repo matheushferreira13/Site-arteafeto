@@ -1,5 +1,5 @@
-// URL do backend em producao (Railway).
-// Apos o deploy no Railway, substitua o valor abaixo pela URL gerada
-// Ex: 'https://backend-arteafeto-production.up.railway.app/api'
-// Em desenvolvimento local, deixe como string vazia para usar localhost:3000
+// Endpoints Xano diretos (auth e pedidos chamados diretamente do browser).
+// API_BASE_URL ainda e usado para o endpoint de produtos, que tem fallback local.
+// Se o backend Railway voltar a funcionar, basta restaurar as URLs abaixo para
+// apontar para o proxy: window.ARTEAFETO_API_BASE_URL = 'https://site-arteafeto-production.up.railway.app/api'
 window.ARTEAFETO_API_BASE_URL = 'https://site-arteafeto-production.up.railway.app/api';
