@@ -12,7 +12,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Libera chamadas do frontend para este backend
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map(o => o.trim())
+  : ['http://localhost:5500', 'http://127.0.0.1:5500'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Permite requisicoes sem origin (ex: Postman, curl) apenas em dev
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Origem nao permitida pelo CORS'));
+    }
+  }
+}));
 
 // Permite receber JSON no body das requisicoes
 app.use(express.json());
